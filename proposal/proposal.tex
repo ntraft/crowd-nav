@@ -1,0 +1,70 @@
+\documentclass[a4paper,11pt,headings=small]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[pdftex]{graphicx}
+\usepackage{dblfloatfix}
+\usepackage{multicol}
+\usepackage{cite}
+\usepackage{pdfpages}
+\usepackage{cite}
+\usepackage{tikz}
+\usepackage{multirow}
+\usepackage[english]{babel}
+\usepackage{float}
+\usepackage{mathcomp}
+\graphicspath{{images/}}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{cancel}	
+\usepackage{setspace}
+\usepackage[ansinew]{inputenc}
+\usepackage[format=plain,font=small,margin=10pt,labelfont=bf,labelsep=quad]{caption}
+\usepackage{subcaption}
+\usepackage{ipa}
+\usepackage{a4wide}
+\usepackage{titlesec}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage[top=3.5cm, bottom=3.5cm, left=2cm, right=2cm]{geometry}
+\sloppy
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+
+\setlength{\columnsep}{1cm}
+
+\begin{document}
+
+\twocolumn[
+  \begin{@twocolumnfalse}
+  \vspace{-1cm}
+	\begin{flushright}
+	November 6, 2013\\
+	\end{flushright}
+	\vspace{0.6cm}
+	\LARGE{\textbf{Robot Navigation in Dense Human Crowds}}\\\\ \\
+	\large{Neil Traft\\[0.25cm] University of British Columbia}		 	 	\vspace{1.3cm}
+\end{@twocolumnfalse}
+]
+
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Robot Navigation in Dense Human Crowds}
+\fancyhead[R]{Neil Traft --- \thepage}
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\onehalfspacing
+
+
+\input{abstract}
+\input{background}
+\input{expectation}
+
+
+\bibliography{references}
+\bibliographystyle{ieeetr}
+
+\end{document}
