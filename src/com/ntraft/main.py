@@ -12,7 +12,6 @@ import matplotlib
 # The 'MacOSX' backend appears to have some issues on Mavericks.
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-from PIL import Image
 import com.ntraft.ewap as ewap
 
 def main():
@@ -28,6 +27,7 @@ def main():
 	# Parse obstacle map.
 	obs_map = ewap.create_obstacle_map(H, mapfile)
 	# Parse pedestrian annotations.
+	annotations = ewap.parse_annotations(obsfile)
 
 def parse_args():
 	parser = argparse.ArgumentParser()
