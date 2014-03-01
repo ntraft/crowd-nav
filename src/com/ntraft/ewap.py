@@ -13,3 +13,8 @@ def parse_annotations(obsmat_txt):
 
 def create_obstacle_map(map_png):
 	pass
+
+def parse_homography_matrix(Hfile):
+	pass
+
+

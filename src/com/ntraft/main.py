@@ -3,9 +3,9 @@ Created on Mar 1, 2014
 
 @author: ntraft
 '''
-
 from __future__ import division
 import sys
+import os
 import argparse
 import numpy as np
 import matplotlib
@@ -19,19 +19,20 @@ def main():
 	# Parse command-line arguments.
 	args = parse_args()
 	
+	Hfile = os.path.join(args.datadir, "H.txt")
+	mapfile = os.path.join(args.datadir, "map.png")
+	obsfile = os.path.join(args.datadir, "obsmat.txt")
+
+	# Parse homography matrix.
+	H = ewap.parse_homography_matrix(Hfile)	
 	# Parse obstacle map.
 	obs_map = ewap.create_obstacle_map(H, mapfile)
 	# Parse pedestrian annotations.
 
 def parse_args():
 	parser = argparse.ArgumentParser()
-	parser.add_argument("left", help="The left-hand stereo image.")
-	parser.add_argument("right", help="The right-hand stereo image.")
-	parser.add_argument("truth", help="The ground truth depth field (from the perspective of the left image).")
-	parser.add_argument("patchwidth", type=int, help="The width of the patch to use for normalized cross-correlation. Must be odd and at least 3.")
+	parser.add_argument("datadir", help="The parent directory for the dataset to be used.")
 	args = parser.parse_args()
-	if args.patchwidth < 3 or args.patchwidth % 2 == 0:
-		parser.error("Invalid patch width.")
 	return args
 
 if __name__ == "__main__":
