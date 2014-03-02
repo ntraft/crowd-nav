@@ -10,11 +10,11 @@ import numpy as np
 from PIL import Image
 
 def parse_homography_matrix(H_txt):
-	return np.fromfile(H_txt, sep=" ")
+	return np.loadtxt(H_txt)
 
 def create_obstacle_map(H, map_png):
 	rawmap = np.array(Image.open(map_png))
 	return rawmap # TODO transform into world coords
 
 def parse_annotations(obsmat_txt):
-	return np.fromfile(obsmat_txt, sep=" ")
+	return np.loadtxt(obsmat_txt)
