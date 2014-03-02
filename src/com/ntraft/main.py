@@ -8,6 +8,7 @@ import sys
 import os
 import argparse
 import numpy as np
+import cv2
 import matplotlib
 # The 'MacOSX' backend appears to have some issues on Mavericks.
 matplotlib.use('TkAgg')
