@@ -7,6 +7,7 @@ import sys
 import os
 import argparse
 import cv2
+import numpy as np
 import com.ntraft.ewap as ewap
 
 POS_MSEC = cv2.cv.CV_CAP_PROP_POS_MSEC
@@ -37,11 +38,20 @@ def main():
 	endpos = END_TIME * 60 * 1000
 	cap.set(POS_MSEC, seekpos)
 	now = cap.get(POS_MSEC)
+	peds = np.array([])
 	while cap.isOpened() and now < endpos:
 		_, frame = cap.read()
 		now = cap.get(POS_MSEC)
 		frame_num = cap.get(POS_FRAMES)
-		peds = annotations[annotations[:,0]==frame_num]
+		
+		# Draw in the pedestrians.
+		newpeds = annotations[annotations[:,0]==frame_num]
+		if newpeds.size > 0:
+			peds = newpeds
+		for ped in peds:
+			loc = ped[2:5].transpose()
+			loc = loc.astype(int)
+			cv2.circle(frame, (loc[0], loc[2]), 5, (255,0,0), -1)
 		
 		cv2.imshow('frame', frame)
 		if cv2.waitKey(40) & 0xFF == ord('q'):
