@@ -10,6 +10,7 @@ import cv2
 import com.ntraft.ewap as ewap
 
 POS_MSEC = cv2.cv.CV_CAP_PROP_POS_MSEC
+POS_FRAMES = cv2.cv.CV_CAP_PROP_POS_FRAMES
 START_TIME = 7.5 # About 7 mins 30 secs
 END_TIME = 8.7 # About 8 mins 40 secs
 
@@ -39,6 +40,9 @@ def main():
 	while cap.isOpened() and now < endpos:
 		_, frame = cap.read()
 		now = cap.get(POS_MSEC)
+		frame_num = cap.get(POS_FRAMES)
+		peds = annotations[annotations[:,0]==frame_num]
+		
 		cv2.imshow('frame', frame)
 		if cv2.waitKey(40) & 0xFF == ord('q'):
 			break
