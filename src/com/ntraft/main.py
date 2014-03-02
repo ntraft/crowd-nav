@@ -24,7 +24,9 @@ def main():
 	obsfile = os.path.join(args.datadir, "obsmat.txt")
 
 	# Parse homography matrix.
-	H = ewap.parse_homography_matrix(Hfile)	
+	H = ewap.parse_homography_matrix(Hfile)
+	Hinv = np.linalg.inv(H)
+	print Hinv
 	# Parse obstacle map.
 	obs_map = ewap.create_obstacle_map(H, mapfile)
 	# Parse pedestrian annotations.
@@ -45,13 +47,16 @@ def main():
 		frame_num = cap.get(POS_FRAMES)
 		
 		# Draw in the pedestrians.
+		# TODO inform/halt if reached the end of annotation file.
+		# TODO annotation coords are still off
+		# TODO annotation timing seems off as well; seems ahead
 		newpeds = annotations[annotations[:,0]==frame_num]
 		if newpeds.size > 0:
 			peds = newpeds
 		for ped in peds:
-			loc = ped[2:5].transpose()
-			loc = loc.astype(int)
-			cv2.circle(frame, (loc[0], loc[2]), 5, (255,0,0), -1)
+			loc = ped[np.ix_([2,4,3])].transpose()
+			loc = np.dot(Hinv, loc).astype(int)
+			cv2.circle(frame, (loc[1], loc[0]), 5, (255,0,0), -1)
 		
 		cv2.imshow('frame', frame)
 		if cv2.waitKey(40) & 0xFF == ord('q'):
