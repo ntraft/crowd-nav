@@ -16,6 +16,7 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
+\usepackage{fouridx}
 \usepackage{cancel}	
 \usepackage{setspace}
 \usepackage[ansinew]{inputenc}
@@ -46,7 +47,7 @@
 	\end{flushright}
 	\vspace{0.6cm}
 	\LARGE{\textbf{Robot Navigation in Dense Human Crowds}\\[0.2cm] Technical Report}\\\\ \\
-	\large{Neil Traft\\[0.1cm] University of British Columbia}		 	 	\vspace{1.3cm}
+	\large{Neil Traft\\[0.1cm] University of British Columbia}		 	 	\vspace{0.6cm}
 %\end{@twocolumnfalse}
 %]
 
@@ -70,14 +71,11 @@
 \newcommand{\samplej}{(\fatj)_i}
 \newcommand{\z}{\mathbf{z}}
 \newcommand{\ztot}{\z_{1:t}}
+\newcommand{\pos}{\mathrm{pos}}
+\newcommand{\post}{\pos^{(i)}_t}
 
-\begin{abstract}
-The goal of this project is to explore robotic navigation in crowded areas by replicating the results of \cite{Trautman2010}. We will use the same annotated video dataset as the original paper to simulate robot path planning through a crowd of oncoming pedestrians. This project has potential applications to both autonomous and semi-autonomous driving protocols in robotic wheelchairs.
-\end{abstract}
-
-
-\section*{Background}
-\quad In their 2010 IROS publication \cite{Trautman2010}, Trautman and Krause develop a path planning algorithm that is safe and yet does not suffer from the ``freezing robot problem'' (FRP). Their method consists of a model of crowd interaction combined with a particle-based inference method to predict where the crowd (and the robot) should be at some time $t+1$ in the future. The idea, as I understand it, is that if one can develop a reliable model of intelligent agents in a crowd, and include the robot as just another of those intelligent agents, then the predictions of the model yield the robot's future path.
+\section*{Overview}
+\quad In their 2010 IROS publication \cite{Trautman2010}, Trautman and Krause develop a path planning algorithm that is safe and yet does not suffer from the ``freezing robot problem'' (FRP). Their method consists of a model of crowd interaction combined with a particle-based inference method to predict where the crowd (and the robot) should be at some time $t+1$ in the future. The idea is that if one can develop a reliable model of intelligent agents in a crowd, and include the robot as just another of those intelligent agents, then the predictions of the model yield the robot's future path.
 
 \subsubsection*{Interacting Gaussian Processes}
 The crowd interaction model is a novel nonparametric statistical model based on Gaussian processes. The authors have named it \emph{Interacting Gaussian Processes} (IGP). In IGP, the actions of all agents, including the robot, are taken as a random response to other agents' behavior. Their interaction is modeled as a joint distribution:
@@ -97,7 +95,29 @@ Given this formulation for $p_{IGP}$ and an appropriate weighting $w_i$ for each
 $$ (\fr,\f)^* = \argmax p_{IGP} $$
 and take the robot's next position to be $\fr_{t+1}$.
 
-\section*{Expectations}
+\section*{Current Status}
+\quad Currently I have downloaded the dataset that will be used for my simulations and begun visualization of the data.
+
+\subsection*{The Dataset}
+\quad The dataset to be used is the BIWI Walking Pedestrians dataset from \cite{Pellegrini2009}. It has been downloaded from \cite{dataset}.
+
+The dataset contains two annotated videos of pedestrian interaction captured from a bird's eye view. Only one of these was used in Trautman's paper, a sequence acquired from the top of the ETH main building, Zurich, in 2009. The film captures people entering to and exiting from the main entrance of the building, such that agents in the image have two main goals: either their goal is a point at the bottom of the image (the entrance), or they are emerging from the entrance and their goal is somewhere along the top of the image (the street).
+
+The main annotations are a matrix where each row has the format:
+\begin{verbatim}
+        [frame_number pedestrian_ID pos_x pos_z pos_y v_x v_z v_y ]
+\end{verbatim}
+
+Thus for each frame $t$ we have potentially multiple pedestrian observations $\post$, and this forms our observation at time $t$:
+$$ \z_t = \pos^{(1:n)}_t $$
+where one of the $n$ pedestrians is chosen to represent the robot $R$.
+
+The \texttt{pos\_z} and \texttt{v\_z} (direction perpendicular to the ground) are not used in the annotations. The velocities will not be used by the IGP algorithm altogether; its only observations are positions at each timestep.
+
+The positions and velocities are in meters and were obtained with a homography matrix $H$, which is also provided with the annotations. To transform the positions back to image coordinates, it is necessary to apply the inverse homography transform:
+$$ \fourIdx{a}{}{}{}\post = H_{ab}^{-1} \cdot \fourIdx{b}{}{}{}\post $$
+
+\subsection*{Next Steps}
 \quad Since I will only be simulating the planning algorithm on annotated video, and not implementing it on a robot, I expect it to be more expedient to implement the project in Python. I will use the Python Imaging Library (PIL) to digest the video frames. I will use NumPy, SciPy, and possibly some accompanying statistical packages to implement the algorithm. I will be able to visualize the results using matplotlib.
 
 The dataset used in \cite{Trautman2010} is the BIWI Walking Pedestrians dataset from \cite{Pellegrini2009}. It is available online from \href{http://www.vision.ee.ethz.ch/datasets/index.en.html}{the ETHZ Computer Vision Lab Dataset page}. The annotations I parse from this dataset will be used to form the observations $\ztot$ used in the planning algorithm.
