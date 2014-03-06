@@ -1,0 +1,113 @@
+\documentclass[a4paper,11pt,headings=small]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[pdftex]{graphicx}
+\usepackage{dblfloatfix}
+\usepackage{multicol}
+\usepackage{cite}
+\usepackage{pdfpages}
+\usepackage{cite}
+\usepackage{tikz}
+\usepackage{multirow}
+\usepackage[english]{babel}
+\usepackage{float}
+\usepackage{mathcomp}
+\graphicspath{{images/}}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{cancel}	
+\usepackage{setspace}
+\usepackage[ansinew]{inputenc}
+\usepackage[format=plain,font=small,margin=10pt,labelfont=bf,labelsep=quad]{caption}
+\usepackage{subcaption}
+\usepackage{ipa}
+\usepackage{a4wide}
+\usepackage{titlesec}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage[top=3.0cm, bottom=3.0cm, left=2cm, right=2cm]{geometry}
+\sloppy
+\usepackage{fancyhdr}
+
+\usepackage{hyperref}
+\hypersetup{colorlinks=true}
+
+\setlength{\columnsep}{1cm}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+\begin{document}
+
+%\twocolumn[
+%  \begin{@twocolumnfalse}
+  \vspace{-1cm}
+	\begin{flushright}
+	February 6, 2014\\
+	\end{flushright}
+	\vspace{0.6cm}
+	\LARGE{\textbf{Robot Navigation in Dense Human Crowds}\\[0.2cm] Technical Report}\\\\ \\
+	\large{Neil Traft\\[0.1cm] University of British Columbia}		 	 	\vspace{1.3cm}
+%\end{@twocolumnfalse}
+%]
+
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Robot Navigation in Dense Human Crowds}
+\fancyhead[R]{Neil Traft --- \thepage}
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+%\onehalfspacing
+\renewcommand{\thesection}{\Roman{section}}
+\thispagestyle{empty}
+
+\newcommand{\f}{\mathbf{f}}
+\newcommand{\fr}{\f^{(R)}}
+\newcommand{\fati}{\f^{(i)}}
+\newcommand{\fatj}{\f^{(j)}}
+\newcommand{\samplej}{(\fatj)_i}
+\newcommand{\z}{\mathbf{z}}
+\newcommand{\ztot}{\z_{1:t}}
+
+\begin{abstract}
+The goal of this project is to explore robotic navigation in crowded areas by replicating the results of \cite{Trautman2010}. We will use the same annotated video dataset as the original paper to simulate robot path planning through a crowd of oncoming pedestrians. This project has potential applications to both autonomous and semi-autonomous driving protocols in robotic wheelchairs.
+\end{abstract}
+
+
+\section*{Background}
+\quad In their 2010 IROS publication \cite{Trautman2010}, Trautman and Krause develop a path planning algorithm that is safe and yet does not suffer from the ``freezing robot problem'' (FRP). Their method consists of a model of crowd interaction combined with a particle-based inference method to predict where the crowd (and the robot) should be at some time $t+1$ in the future. The idea, as I understand it, is that if one can develop a reliable model of intelligent agents in a crowd, and include the robot as just another of those intelligent agents, then the predictions of the model yield the robot's future path.
+
+\subsubsection*{Interacting Gaussian Processes}
+The crowd interaction model is a novel nonparametric statistical model based on Gaussian processes. The authors have named it \emph{Interacting Gaussian Processes} (IGP). In IGP, the actions of all agents, including the robot, are taken as a random response to other agents' behavior. Their interaction is modeled as a joint distribution:
+$$p(\fr,\f|\ztot)$$
+where $\fr$ is the robot's trajectory over $T$ timesteps, $\f$ is the set of all human trajectories, and $\ztot$ is the set of all observations up to the current time point. For the purposes of this algorithm, observations of human and robot position are taken to be more or less perfect, since we are only trying to solve the navigation problem, not the awareness problem.
+
+Each agent's trajectory is an independent sample from a Gaussian process. This would be only a simple Gaussian process yielding the same uncertainty explosion which leads to the FRP, but it is modified in two ways. First, goal information is given as a final "observation" at time $T$, resulting in the full set of observations $\z_{1:t,T}$. The robot's goal, $y_T^{(R)}$, is known and can be added with good confidence. The goals of other agents can be omitted or can be added with a large confidence interval, to encode how uncertain we are about the goal.
+
+The second addition IGP makes to standard Gaussian processes is the inclusion of an ``interaction potential'' $\psi(\fr,\f)$. In essence, this potential grows very small whenever two agents $i$ and $j$ become very close at any time $\tau$. This has the result that any set of paths where agents become too close is treated as very unlikely. There are two parameters in this potential, $h$ and $\alpha$, that must be tuned for the desired ``safety distance'' and ``repelling force''. For details, see the paper.
+
+\subsubsection*{Importance Sampling}
+Now that we have a model, we only need to sample from it to produce $\fr$. However, with the addition of the interaction potential $\psi$, our distributions at each time step are nonlinear and potentially multimodal. Thus, we can no longer sample from the distribution directly. We instead use the \emph{importance sampling} technique which is widely used in particle filters. Each sample is weighted by the ratio of the IGP to the basic GP (i.e. the Gaussian distribution, without the interaction potential):
+$$ w_i = \frac{p_{IGP}}{p_{GP}} = \frac{p_{IGP}((\fr,\f) | \ztot)}{\prod_{j=R}^n p(\samplej | \ztot)} $$
+where $\samplej$ is a single sample from the trajectory of agent $j$.
+
+Given this formulation for $p_{IGP}$ and an appropriate weighting $w_i$ for each sample, we can now find the ideal paths:
+$$ (\fr,\f)^* = \argmax p_{IGP} $$
+and take the robot's next position to be $\fr_{t+1}$.
+
+\section*{Expectations}
+\quad Since I will only be simulating the planning algorithm on annotated video, and not implementing it on a robot, I expect it to be more expedient to implement the project in Python. I will use the Python Imaging Library (PIL) to digest the video frames. I will use NumPy, SciPy, and possibly some accompanying statistical packages to implement the algorithm. I will be able to visualize the results using matplotlib.
+
+The dataset used in \cite{Trautman2010} is the BIWI Walking Pedestrians dataset from \cite{Pellegrini2009}. It is available online from \href{http://www.vision.ee.ethz.ch/datasets/index.en.html}{the ETHZ Computer Vision Lab Dataset page}. The annotations I parse from this dataset will be used to form the observations $\ztot$ used in the planning algorithm.
+
+I will choose particular time points at which to run IGP, and choose a particular pedestrian to represent the ``robot''. By evaluating IGP at this single time slice, and comparing it to the actual path taken by the pedestrian, we can evaluate the performance of the planner. We evaluate its performance based on $l$, the length of the path, and $s$, the minimum distance which the path ever comes within another pedestrian's path.
+
+I expect to be able to closely reproduce the original results. I will have to tweak the parameters $\alpha$ and $h$ in the interaction potential, since the ones used for the original experiments are not directly given. I will also have to tweak the number of particles used for inference, though the paper does specify a range of $[100,5000]$ which should help. I may also have to play with the ``simulated observation'' that represents each agent's goal. The original paper does not give any details about the use of agent goals.
+
+
+\bibliography{references}
+\bibliographystyle{ieeetr}
+
+\end{document}
