@@ -26,7 +26,6 @@ def main():
 	# Parse homography matrix.
 	H = ewap.parse_homography_matrix(Hfile)
 	Hinv = np.linalg.inv(H)
-	print Hinv
 	# Parse obstacle map.
 	obs_map = ewap.create_obstacle_map(H, mapfile)
 	# Parse pedestrian annotations.
@@ -55,8 +54,11 @@ def main():
 			peds = newpeds
 		for ped in peds:
 			loc = ped[np.ix_([2,4,3])].transpose()
-			loc = np.dot(Hinv, loc).astype(int)
+			loc = np.dot(Hinv.transpose(), loc).astype(int)
 			cv2.circle(frame, (loc[1], loc[0]), 5, (255,0,0), -1)
+		
+		# Draw the obstacles.
+		frame = np.maximum(frame, cv2.cvtColor(obs_map, cv2.COLOR_GRAY2BGR))
 		
 		cv2.imshow('frame', frame)
 		if cv2.waitKey(40) & 0xFF == ord('q'):
