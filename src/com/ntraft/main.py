@@ -22,6 +22,7 @@ def main():
 	Hfile = os.path.join(args.datadir, "H.txt")
 	mapfile = os.path.join(args.datadir, "map.png")
 	obsfile = os.path.join(args.datadir, "obsmat.txt")
+	destfile = os.path.join(args.datadir, "destinations.txt")
 
 	# Parse homography matrix.
 	H = ewap.parse_homography_matrix(Hfile)
@@ -30,6 +31,7 @@ def main():
 	obs_map = ewap.create_obstacle_map(H, mapfile)
 	# Parse pedestrian annotations.
 	annotations = ewap.parse_annotations(obsfile)
+	destinations = ewap.parse_annotations(destfile)
 	
 	# Play the video
 	seqname = os.path.basename(args.datadir)
@@ -56,6 +58,12 @@ def main():
 			loc = ped[np.ix_([2,4,3])].transpose()
 			loc = np.dot(Hinv.transpose(), loc).astype(int)
 			cv2.circle(frame, (loc[1], loc[0]), 5, (255,0,0), -1)
+		
+		# Draw destinations.
+		for d in destinations:
+			d = np.hstack((d, 0))
+			d = np.dot(d, Hinv).transpose().astype(int)
+			cv2.circle(frame, (d[0], d[1]), 5, (0,255,0), -1)
 		
 		# Draw the obstacles.
 		frame = np.maximum(frame, cv2.cvtColor(obs_map, cv2.COLOR_GRAY2BGR))
