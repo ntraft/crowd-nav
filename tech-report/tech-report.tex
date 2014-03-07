@@ -78,16 +78,25 @@
 \quad In their 2010 IROS publication \cite{Trautman2010}, Trautman and Krause develop a path planning algorithm that is safe and yet does not suffer from the ``freezing robot problem'' (FRP). Their method consists of a model of crowd interaction combined with a particle-based inference method to predict where the crowd (and the robot) should be at some time $t+1$ in the future. The idea is that if one can develop a reliable model of intelligent agents in a crowd, and include the robot as just another of those intelligent agents, then the predictions of the model yield the robot's future path.
 
 \subsubsection*{Interacting Gaussian Processes}
-The crowd interaction model is a novel nonparametric statistical model based on Gaussian processes. The authors have named it \emph{Interacting Gaussian Processes} (IGP). In IGP, the actions of all agents, including the robot, are taken as a random response to other agents' behavior. Their interaction is modeled as a joint distribution:
+\quad The crowd interaction model is a nonparametric stochastic model based on Gaussian processes, dubbed \emph{Interacting Gaussian Processes} (IGP). In IGP, the actions of all agents, including the robot, are modeled as a joint distribution:
 $$p(\fr,\f|\ztot)$$
-where $\fr$ is the robot's trajectory over $T$ timesteps, $\f$ is the set of all human trajectories, and $\ztot$ is the set of all observations up to the current time point. For the purposes of this algorithm, observations of human and robot position are taken to be more or less perfect, since we are only trying to solve the navigation problem, not the awareness problem.
+where $\fr$ is the robot's trajectory over $T$ timesteps, $\f$ is the set of all human trajectories, and $\ztot$ is the set of all observations up to the current time point. For the purposes of this algorithm, observations of human and robot position are taken to be more or less perfect, since we are only trying to solve the navigation problem, not situational awareness.
 
-Each agent's trajectory is an independent sample from a Gaussian process. This would be only a simple Gaussian process yielding the same uncertainty explosion which leads to the FRP, but it is modified in two ways. First, goal information is given as a final "observation" at time $T$, resulting in the full set of observations $\z_{1:t,T}$. The robot's goal, $y_T^{(R)}$, is known and can be added with good confidence. The goals of other agents can be omitted or can be added with a large confidence interval, to encode how uncertain we are about the goal.
+At each timestep, each agent's new position is represented as a random variable from a probability distribution. It is important to note that this distribution is \emph{not} Gaussian, due to two major additions to avoid the uncertainty explosion which leads to the FRP (see Figure \ref{uncertainty}).
+
+First, goal information is given as a final "observation" at time $T$, resulting in the full set of observations $\z_{1:t,T}$. The robot's goal, $y_T^{(R)}$, is known and can be added with good confidence. The goals of other agents can be omitted or can be added with a large confidence interval, to encode how uncertain we are about the goal.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=.75\textwidth]{uncertainty-explosion.png}
+\caption{Diagrams taken from \cite{Trautman2010} describing the uncertainty explosion which leads to the Freezing Robot Problem. \textbf{Left:} Depicts the uncertainty explosion in standard motion models, where each agent's trajectory is \emph{independent} from the others. \textbf{Middle:} A demonstration of why even \emph{perfect} prediction, devoid of uncertainty, can still lead to the FRP. In crowded environments, \emph{all} paths can have a high cost function, leading to extreme evasive maneuvers or freezing. \textbf{Right:} The ideal model, based on the insight that intelligent agents engage in \emph{cooperative} collision avoidance.}
+\label{uncertainty}
+\end{figure}
 
 The second addition IGP makes to standard Gaussian processes is the inclusion of an ``interaction potential'' $\psi(\fr,\f)$. In essence, this potential grows very small whenever two agents $i$ and $j$ become very close at any time $\tau$. This has the result that any set of paths where agents become too close is treated as very unlikely. There are two parameters in this potential, $h$ and $\alpha$, that must be tuned for the desired ``safety distance'' and ``repelling force''. For details, see the paper.
 
 \subsubsection*{Importance Sampling}
-Now that we have a model, we only need to sample from it to produce $\fr$. However, with the addition of the interaction potential $\psi$, our distributions at each time step are nonlinear and potentially multimodal. Thus, we can no longer sample from the distribution directly. We instead use the \emph{importance sampling} technique which is widely used in particle filters. Each sample is weighted by the ratio of the IGP to the basic GP (i.e. the Gaussian distribution, without the interaction potential):
+\quad Now that we have a model, we only need to sample from it to produce $\fr$. However, with the addition of the interaction potential $\psi$, our distributions at each time step are nonlinear and potentially multimodal. Thus, we can no longer sample from the distribution directly. We instead use the \emph{importance sampling} technique which is widely used in particle filters. Each sample is weighted by the ratio of the IGP to the basic GP (i.e. the Gaussian distribution, without the interaction potential):
 $$ w_i = \frac{p_{IGP}}{p_{GP}} = \frac{p_{IGP}((\fr,\f) | \ztot)}{\prod_{j=R}^n p(\samplej | \ztot)} $$
 where $\samplej$ is a single sample from the trajectory of agent $j$.
 
