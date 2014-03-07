@@ -99,7 +99,7 @@ and take the robot's next position to be $\fr_{t+1}$.
 \quad Currently I have downloaded the dataset that will be used for my simulations and begun visualization of the data.
 
 \subsection*{The Dataset}
-\quad The dataset to be used is the BIWI Walking Pedestrians dataset from \cite{Pellegrini2009}. It has been downloaded from \cite{dataset}.
+\quad The dataset to be used is the ETH Walking Pedestrians (EWAP) dataset from \cite{Pellegrini2009}. It has been downloaded from \cite{dataset}.
 
 The dataset contains two annotated videos of pedestrian interaction captured from a bird's eye view. Only one of these was used in Trautman's paper, a sequence acquired from the top of the ETH main building, Zurich, in 2009. The film captures people entering to and exiting from the main entrance of the building, such that agents in the image have two main goals: either their goal is a point at the bottom of the image (the entrance), or they are emerging from the entrance and their goal is somewhere along the top of the image (the street).
 
@@ -115,16 +115,39 @@ where one of the $n$ pedestrians is chosen to represent the robot $R$.
 The \texttt{pos\_z} and \texttt{v\_z} (direction perpendicular to the ground) are not used in the annotations. The velocities will not be used by the IGP algorithm altogether; its only observations are positions at each timestep.
 
 The positions and velocities are in meters and were obtained with a homography matrix $H$, which is also provided with the annotations. To transform the positions back to image coordinates, it is necessary to apply the inverse homography transform:
-$$ \fourIdx{a}{}{}{}\post = H_{ab}^{-1} \cdot \fourIdx{b}{}{}{}\post $$
+$$ \fourIdx{m}{}{}{}\post = H_{mw}^{-1} \cdot \fourIdx{w}{}{}{}\post \qquad m = \mathrm{image}, w = \mathrm{world} $$
+
+In addition to the main annotations, there is also a list of possible destinations. These must be transformed into image coordinates in the same way. These can be used as the set of possible goals that IGP uses to help reduce the uncertainty explosion. In actual implementation, the goals $y^{(i)}_T$ for each pedestrian $i$ are just observations at the final timepoint, $\z_T$.
+
+This is just a set of possible goals; the method for choosing which pedestrian has which goal is flexible. The original paper does not detail how these goals are chosen, but \cite{Pellegrini2009} assigns each pedestrian the closest goal at each timepoint in their crowd interaction model. This is surprising to me, as it seems like this would pull the predictions in the exact opposite direction until the pedestrian gets to the middle of the image, but I'll start with it and refine it later if needed.
 
 \subsection*{Next Steps}
-\quad Since I will only be simulating the planning algorithm on annotated video, and not implementing it on a robot, I expect it to be more expedient to implement the project in Python. I will use the Python Imaging Library (PIL) to digest the video frames. I will use NumPy, SciPy, and possibly some accompanying statistical packages to implement the algorithm. I will be able to visualize the results using matplotlib.
+\quad At present there is a problem with how I'm transforming pedestrian points into image space using the homography matrix. This affects only the visualization, as the path planner will work in world coordinates, but I will need to fix it before I can really tell what my algorithm is doing. It seems to be nearly correct, but needs to be normalized into some bounding box that isn't specified in the documentation for the EWAP dataset. An example of the bug is given in Figure \ref{bug}.
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.8\textwidth}
+\centering
+\includegraphics[width=\textwidth]{dataset-bug.png}
+\caption{A sample frame from my current visualization.}
+\label{a}
+\end{subfigure}
+\begin{subfigure}[b]{0.8\textwidth}
+\centering
+\includegraphics[width=\textwidth]{dataset-example.png}
+\caption{A sample frame from the ETH paper.\cite{Pellegrini2009}}
+\label{b}
+\end{subfigure}
+\caption{A sample frame from my (buggy) implementation (\ref{a}) compared with a correct implementation (\ref{b}). In the top image, blue dots mark pedestrians, white lines mark static obstacles, and green dots mark possible destinations. If examined closely, one can see the pedestrian markings in my video are correct in relation to each other, but appear scaled and translated within the image plane. The destinations appear to have the same issue (only one destination is visible but there are about 4 total).}
+\label{bug}
+\end{figure}
+
 
 The dataset used in \cite{Trautman2010} is the BIWI Walking Pedestrians dataset from \cite{Pellegrini2009}. It is available online from \href{http://www.vision.ee.ethz.ch/datasets/index.en.html}{the ETHZ Computer Vision Lab Dataset page}. The annotations I parse from this dataset will be used to form the observations $\ztot$ used in the planning algorithm.
 
 I will choose particular time points at which to run IGP, and choose a particular pedestrian to represent the ``robot''. By evaluating IGP at this single time slice, and comparing it to the actual path taken by the pedestrian, we can evaluate the performance of the planner. We evaluate its performance based on $l$, the length of the path, and $s$, the minimum distance which the path ever comes within another pedestrian's path.
 
-I expect to be able to closely reproduce the original results. I will have to tweak the parameters $\alpha$ and $h$ in the interaction potential, since the ones used for the original experiments are not directly given. I will also have to tweak the number of particles used for inference, though the paper does specify a range of $[100,5000]$ which should help. I may also have to play with the ``simulated observation'' that represents each agent's goal. The original paper does not give any details about the use of agent goals.
+Once the algorithm is working correctly, there will be some final work tuning parameters and goals. I will have to tweak the parameters $\alpha$ and $h$ in the interaction potential, since the ones used for the original experiments are not directly given (though some suggestions are implied). I will also have to tweak the number of particles used for inference, though the paper does specify a range of $[100,5000]$ which should help. I may also have to play with the ``simulated observation'' that represents each agent's goal. The original paper does not give any details about the use of agent goals.
 
 
 \bibliography{references}
