@@ -84,7 +84,7 @@ where $\fr$ is the robot's trajectory over $T$ timesteps, $\f$ is the set of all
 
 At each timestep, each agent's new position is represented as a random variable from a probability distribution. It is important to note that this distribution is \emph{not} Gaussian, due to two major additions to avoid the uncertainty explosion which leads to the FRP (see Figure \ref{uncertainty}).
 
-First, goal information is given as a final "observation" at time $T$, resulting in the full set of observations $\z_{1:t,T}$. The robot's goal, $y_T^{(R)}$, is known and can be added with good confidence. The goals of other agents can be omitted or can be added with a large confidence interval, to encode how uncertain we are about the goal.
+First, goal information is given as a final ``observation'' at time $T$, resulting in the full set of observations $\z_{1:t,T}$. The robot's goal, $y_T^{(R)}$, is known and can be added with good confidence. The goals of other agents can be omitted or can be added with a large confidence interval, to encode how uncertain we are about the goal.
 
 \begin{figure}[h]
 \centering
@@ -93,7 +93,14 @@ First, goal information is given as a final "observation" at time $T$, resulting
 \label{uncertainty}
 \end{figure}
 
-The second addition IGP makes to standard Gaussian processes is the inclusion of an ``interaction potential'' $\psi(\fr,\f)$. In essence, this potential grows very small whenever two agents $i$ and $j$ become very close at any time $\tau$. This has the result that any set of paths where agents become too close is treated as very unlikely. There are two parameters in this potential, $h$ and $\alpha$, that must be tuned for the desired ``safety distance'' and ``repelling force''. For details, see the paper.
+The second addition IGP makes to standard Gaussian processes is the inclusion of an ``interaction potential:''
+$$ \psi(\fr,\f) = \prod_{i=1}^n \prod_{j=i+1}^n \prod_{\tau=t}^T \left( 1 - \alpha \exp\big(-\frac{1}{2h^2}|\fati_{\tau} - \fatj_{\tau}|\big) \right)$$
+
+In essence, this potential grows very small whenever two agents $i$ and $j$ become very close at any time $\tau$. This has the result that any set of paths where agents become too close is treated as very unlikely. The parameter $h$ controls the desired ``safety distance'' and $\alpha \in [0, 1]$ controls the ``repelling force''. Thus, the final posterior is given as:
+$$ p_{IGP}(\fr,\f | \ztot) = \frac{1}{Z} \; \psi(\fr,\f) \prod_{i=1}^n p(\fati | \ztot) $$
+
+% What is Z?
+% Explain the nature of the distribution and why we need importance sampling. Mention GP priors.
 
 \subsubsection*{Importance Sampling}
 \quad Now that we have a model, we only need to sample from it to produce $\fr$. However, with the addition of the interaction potential $\psi$, our distributions at each time step are nonlinear and potentially multimodal. Thus, we can no longer sample from the distribution directly. We instead use the \emph{importance sampling} technique which is widely used in particle filters. Each sample is weighted by the ratio of the IGP to the basic GP (i.e. the Gaussian distribution, without the interaction potential):
