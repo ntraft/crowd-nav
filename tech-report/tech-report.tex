@@ -86,13 +86,6 @@ At each timestep, each agent's new position is represented as a random variable 
 
 First, goal information is given as a final ``observation'' at time $T$, resulting in the full set of observations $\z_{1:t,T}$. The robot's goal, $y_T^{(R)}$, is known and can be added with good confidence. The goals of other agents can be omitted or can be added with a large confidence interval, to encode how uncertain we are about the goal.
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=.75\textwidth]{uncertainty-explosion.png}
-\caption{Diagrams taken from \cite{Trautman2010} describing the uncertainty explosion which leads to the Freezing Robot Problem. \textbf{Left:} Depicts the uncertainty explosion in standard motion models, where each agent's trajectory is \emph{independent} from the others. \textbf{Middle:} A demonstration of why even \emph{perfect} prediction, devoid of uncertainty, can still lead to the FRP. In crowded environments, \emph{all} paths can have a high cost function, leading to extreme evasive maneuvers or freezing. \textbf{Right:} The ideal model, based on the insight that intelligent agents engage in \emph{cooperative} collision avoidance.}
-\label{uncertainty}
-\end{figure}
-
 The second addition IGP makes to standard Gaussian processes is the inclusion of an ``interaction potential:''
 $$ \psi(\fr,\f) = \prod_{i=1}^n \prod_{j=i+1}^n \prod_{\tau=t}^T \left( 1 - \alpha \exp\big(-\frac{1}{2h^2}|\fati_{\tau} - \fatj_{\tau}|\big) \right)$$
 
@@ -100,16 +93,24 @@ In essence, this potential grows very small whenever two agents $i$ and $j$ beco
 $$ p_{IGP}(\fr,\f | \ztot) = \frac{1}{Z} \; \psi(\fr,\f) \prod_{i=1}^n p(\fati | \ztot) $$
 
 % What is Z?
-% Explain the nature of the distribution and why we need importance sampling. Mention GP priors.
+
+The above is a nonlinear, multimodal distribution, so it can't be sampled directly. Instead, we sample from Gaussian priors $p(\fati|\ztot)$ and resample weighted by our desired distribution (a particle filter). This is described in the next section.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=.75\textwidth]{uncertainty-explosion.png}
+\caption{Diagrams taken from \cite{Trautman2010} describing the uncertainty explosion which leads to the Freezing Robot Problem. \textbf{Left:} Depicts the uncertainty explosion in standard motion models, where each agent's trajectory is \emph{independent} from the others. \textbf{Middle:} A demonstration of why even \emph{perfect} prediction, devoid of uncertainty, can still lead to the FRP. In crowded environments, \emph{all} paths can have a high cost function, leading to extreme evasive maneuvers or freezing. \textbf{Right:} The ideal model, based on the insight that intelligent agents engage in \emph{cooperative} collision avoidance.}
+\label{uncertainty}
+\end{figure}
 
 \subsubsection*{Importance Sampling}
-\quad Now that we have a model, we only need to sample from it to produce $\fr$. However, with the addition of the interaction potential $\psi$, our distributions at each time step are nonlinear and potentially multimodal. Thus, we can no longer sample from the distribution directly. We instead use the \emph{importance sampling} technique which is widely used in particle filters. Each sample is weighted by the ratio of the IGP to the basic GP (i.e. the Gaussian distribution, without the interaction potential):
-$$ w_i = \frac{p_{IGP}}{p_{GP}} = \frac{p_{IGP}((\fr,\f) | \ztot)}{\prod_{j=R}^n p(\samplej | \ztot)} $$
+\quad Now that we have a model, we wish to sample from it and take the mean as the desired path. Since we can't sample from it directly, we instead use the \emph{importance sampling} technique which is widely used in particle filters. Each sample is weighted by the ratio of the IGP to the basic GP (i.e. the Gaussian distribution, without the interaction potential):
+$$ w_i = \frac{p_{IGP}}{p_{GP}} = \frac{p_{IGP}((\fr,\f) | \ztot)}{\prod_{j=R}^n p(\samplej | \ztot)} = \frac{\psi((\fr,\f)_i) \prod_{j=R}^n p(\samplej | \ztot)}{\prod_{j=R}^n p(\samplej | \ztot)} = \psi((\fatj)_i)$$
 where $\samplej$ is a single sample from the trajectory of agent $j$.
 
 Given this formulation for $p_{IGP}$ and an appropriate weighting $w_i$ for each sample, we can now find the ideal paths:
-$$ (\fr,\f)^* = \argmax p_{IGP} $$
-and take the robot's next position to be $\fr_{t+1}$.
+$$ (\fr,\f)^* = \argmax\left( \sum_{i=1}^N w_i(\fr,\f)_i \right) $$
+where $(\fr,\f)_i$ is a set of samples. The total number of samples is $N$ and we take the robot's next position to be $\fr_{t+1}$.
 
 \section*{Current Status}
 \quad Currently I have downloaded the dataset that will be used for my simulations and begun visualization of the data.
@@ -121,7 +122,7 @@ The dataset contains two annotated videos of pedestrian interaction captured fro
 
 The main annotations are a matrix where each row has the format:
 \begin{verbatim}
-        [frame_number pedestrian_ID pos_x pos_z pos_y v_x v_z v_y ]
+        [frame_number pedestrian_ID pos_x pos_z pos_y v_x v_z v_y]
 \end{verbatim}
 
 Thus for each frame $t$ we have potentially multiple pedestrian observations $\post$, and this forms our observation at time $t$:
