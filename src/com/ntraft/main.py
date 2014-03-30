@@ -26,13 +26,14 @@ def main():
 	destfile = os.path.join(args.datadir, "destinations.txt")
 
 	# Parse homography matrix.
-	H = ewap.parse_homography_matrix(Hfile)
+	H = np.loadtxt(Hfile)
 	Hinv = np.linalg.inv(H)
 	# Parse obstacle map.
 	obs_map = ewap.create_obstacle_map(H, mapfile)
 	# Parse pedestrian annotations.
-	annotations = ewap.parse_annotations(obsfile)
-	destinations = ewap.parse_annotations(destfile)
+	frames, timesteps, agents = ewap.parse_annotations(obsfile)
+	# Parse destinations.
+	destinations = np.loadtxt(destfile)
 	
 	# Play the video
 	seqname = os.path.basename(args.datadir)
@@ -61,18 +62,22 @@ def main():
 		
 		# Draw in the pedestrians.
 		# TODO inform/halt if reached the end of annotation file.
-		# TODO annotation coords are still off
-		# TODO annotation timing seems off as well; seems ahead
-		newpeds = annotations[annotations[:,0]==frame_num]
-		if newpeds.size > 0:
-			peds = newpeds
+		if frames[frame_num] >= 0:
+			peds = timesteps[frames[frame_num]]
 		for ped in peds:
-			loc = ped[np.ix_([2,4,3])]
-			loc[2] = 1
-			loc = np.dot(Hinv, loc) # to camera frame
-			loc /= loc[2] # to pixels (from millimeters)
-			loc = loc.astype(int) # discretize
-			cv2.circle(frame, (loc[1], loc[0]), 5, (255,0,0), -1)
+			fullpath = agents[ped]
+			path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==frame_num)
+			path = fullpath[0:path_end, 1:3]
+			prev = None
+			for loc in path:
+				loc = np.dot(Hinv, loc) # to camera frame
+				loc /= loc[2] # to pixels (from millimeters)
+				loc = loc.astype(int) # discretize
+				loc = (loc[1], loc[0])
+				cv2.circle(frame, loc, 5, (255,0,0), -1)
+				if prev:
+					cv2.line(frame, prev, loc, (255,0,0), 2)
+				prev = loc
 		
 		cv2.imshow('frame', frame)
 		key = cv2.waitKey(0)
