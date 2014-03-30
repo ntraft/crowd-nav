@@ -48,7 +48,7 @@ def main():
 	while cap.isOpened() and now < endpos:
 		_, frame = cap.read()
 		now = cap.get(POS_MSEC)
-		frame_num = cap.get(POS_FRAMES)
+		frame_num = int(cap.get(POS_FRAMES))
 		
 		# Draw the obstacles.
 		frame = np.maximum(frame, cv2.cvtColor(obs_map, cv2.COLOR_GRAY2BGR))
@@ -62,21 +62,22 @@ def main():
 		
 		# Draw in the pedestrians.
 		# TODO inform/halt if reached the end of annotation file.
-		if frames[frame_num] >= 0:
-			peds = timesteps[frames[frame_num]]
+		t = frames[frame_num]
+		if t >= 0:
+			peds = timesteps[t]
 		for ped in peds:
 			fullpath = agents[ped]
-			path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==frame_num)
-			path = fullpath[0:path_end, 1:3]
+			path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==t)
+			path = fullpath[0:path_end+1, 1:4]
 			prev = None
 			for loc in path:
 				loc = np.dot(Hinv, loc) # to camera frame
 				loc /= loc[2] # to pixels (from millimeters)
 				loc = loc.astype(int) # discretize
 				loc = (loc[1], loc[0])
-				cv2.circle(frame, loc, 5, (255,0,0), -1)
+				cv2.circle(frame, loc, 3, (255,0,0), -1)
 				if prev:
-					cv2.line(frame, prev, loc, (255,0,0), 2)
+					cv2.line(frame, prev, loc, (255,0,0), 1)
 				prev = loc
 		
 		cv2.imshow('frame', frame)
