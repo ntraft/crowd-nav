@@ -44,7 +44,7 @@ def main():
 # 	cap.set(POS_MSEC, seekpos)
 	cap.set(POS_FRAMES, 11300)
 	now = cap.get(POS_MSEC)
-	peds = np.array([])
+	paths = []
 	while cap.isOpened() and now < endpos:
 		_, frame = cap.read()
 		now = cap.get(POS_MSEC)
@@ -60,15 +60,19 @@ def main():
 			d = (d/d[2]).astype(int)
 			cv2.circle(frame, (d[1], d[0]), 5, (0,255,0), -1)
 		
-		# Draw in the pedestrians.
-		# TODO inform/halt if reached the end of annotation file.
+		# If we've reached a new timestep, recompute the observations.
 		t = frames[frame_num]
 		if t >= 0:
 			peds = timesteps[t]
-		for ped in peds:
-			fullpath = agents[ped]
-			path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==t)
-			path = fullpath[0:path_end+1, 1:4]
+			paths = []
+			for ped in peds:
+				fullpath = agents[ped]
+				path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==t)
+				path = fullpath[0:path_end+1, 1:4]
+				paths.append(path)
+
+		# Draw in the pedestrians.
+		for path in paths:
 			prev = None
 			for loc in path:
 				loc = np.dot(Hinv, loc) # to camera frame
@@ -80,6 +84,7 @@ def main():
 					cv2.line(frame, prev, loc, (255,0,0), 1)
 				prev = loc
 		
+		# TODO inform/halt if reached the end of annotation file.
 		cv2.imshow('frame', frame)
 		key = cv2.waitKey(0)
 		if key & 0xFF == ord('q'):
