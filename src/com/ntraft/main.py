@@ -3,6 +3,7 @@ Created on Mar 1, 2014
 
 @author: ntraft
 '''
+from __future__ import division
 import sys
 import os
 import argparse
@@ -26,7 +27,16 @@ def main():
 
 	# Parse homography matrix.
 	H = ewap.parse_homography_matrix(Hfile)
+# 	H = np.column_stack((H, np.array([0,0,0])))
+# 	H = np.row_stack((H, [0,0,0,1]))
 	Hinv = np.linalg.inv(H)
+	print H
+	print Hinv
+	print np.allclose(np.dot(H, Hinv), np.eye(3))
+	print np.allclose(np.dot(Hinv, H), np.eye(3))
+	L = 1
+	sx = 1
+	sy = 1
 	# Parse obstacle map.
 	obs_map = ewap.create_obstacle_map(H, mapfile)
 	# Parse pedestrian annotations.
@@ -39,13 +49,31 @@ def main():
 	
 	seekpos = START_TIME * 60 * 1000
 	endpos = END_TIME * 60 * 1000
-	cap.set(POS_MSEC, seekpos)
+# 	cap.set(POS_MSEC, seekpos)
+	cap.set(POS_FRAMES, 11300)
 	now = cap.get(POS_MSEC)
 	peds = np.array([])
 	while cap.isOpened() and now < endpos:
 		_, frame = cap.read()
 		now = cap.get(POS_MSEC)
 		frame_num = cap.get(POS_FRAMES)
+		print frame_num
+		centerX = frame.shape[0]/2
+		centerY = frame.shape[1]/2
+		intrinsic = np.array([	[L/sx, 0, -centerX],
+								[L/sy, 0, -centerY],
+								[   0, 0,        1]])
+		
+		# Draw the obstacles.
+		frame = np.maximum(frame, cv2.cvtColor(obs_map, cv2.COLOR_GRAY2BGR))
+		
+		# Draw destinations.
+		for d in destinations:
+			d = np.append(d, 1)
+# 			d = np.append(d, 1)
+			d = np.dot(Hinv, d).astype(int)
+			d /= d[2]
+			cv2.circle(frame, (d[1], d[0]), 5, (0,255,0), -1)
 		
 		# Draw in the pedestrians.
 		# TODO inform/halt if reached the end of annotation file.
@@ -56,20 +84,18 @@ def main():
 			peds = newpeds
 		for ped in peds:
 			loc = ped[np.ix_([2,4,3])].transpose()
-			loc = np.dot(Hinv.transpose(), loc).astype(int)
+			loc[2] = 1
+			loc = np.dot(Hinv, loc) # to camera frame
+			print 'before', loc
+# 			loc = np.dot(intrinsic, loc) # to image plane
+			loc /= loc[2] # to pixels (from millimeters)
+			print 'after', loc
+			loc = loc.astype(int) # discretize
 			cv2.circle(frame, (loc[1], loc[0]), 5, (255,0,0), -1)
 		
-		# Draw destinations.
-		for d in destinations:
-			d = np.hstack((d, 0))
-			d = np.dot(d, Hinv).transpose().astype(int)
-			cv2.circle(frame, (d[0], d[1]), 5, (0,255,0), -1)
-		
-		# Draw the obstacles.
-		frame = np.maximum(frame, cv2.cvtColor(obs_map, cv2.COLOR_GRAY2BGR))
-		
 		cv2.imshow('frame', frame)
-		if cv2.waitKey(40) & 0xFF == ord('q'):
+		key = cv2.waitKey(0)
+		if key & 0xFF == ord('q'):
 			break
 	
 	cap.release()
