@@ -15,11 +15,12 @@ def create_obstacle_map(H, map_png):
 
 def parse_annotations(obsmat_txt):
 	mat = np.loadtxt(obsmat_txt)
-	num_frames = np.unique(mat[:,0]).size
-	num_peds = np.unique(mat[:,1]).size
-	frames = [-1]*mat[-1,0] # maps frame -> timestep
-	timesteps = [[] for _ in range(num_frames)] # maps timestep -> ped IDs
-	peds = [[] for _ in range(num_peds)] # maps timestep -> ped IDs
+	num_frames = mat[-1,0] + 1
+	num_times = np.unique(mat[:,0]).size
+	num_peds = int(np.max(mat[:,1])) + 1
+	frames = [-1] * num_frames # maps frame -> timestep
+	timesteps = [[] for _ in range(num_times)] # maps timestep -> ped IDs
+	peds = [np.array([]).reshape(0,4) for _ in range(num_peds)] # maps timestep -> ped IDs
 	frame = 0
 	time = -1
 	for row in mat:
