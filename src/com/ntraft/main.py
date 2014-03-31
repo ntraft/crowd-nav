@@ -14,8 +14,6 @@ import com.ntraft.util as util
 
 POS_MSEC = cv2.cv.CV_CAP_PROP_POS_MSEC
 POS_FRAMES = cv2.cv.CV_CAP_PROP_POS_FRAMES
-START_TIME = 7.5 # About 7 mins 30 secs
-END_TIME = 8.7 # About 8 mins 40 secs
 
 def main():
 	# Parse command-line arguments.
@@ -40,15 +38,14 @@ def main():
 	seqname = os.path.basename(args.datadir)
 	cap = cv2.VideoCapture(os.path.join(args.datadir, seqname+".avi"))
 	
-	seekpos = START_TIME * 60 * 1000
-	endpos = END_TIME * 60 * 1000
+# 	seekpos = 7.5 * 60 * 1000 # About 7 mins 30 secs
+# 	endpos = 8.7 * 60 * 1000 # About 8 mins 40 secs
 # 	cap.set(POS_MSEC, seekpos)
 	cap.set(POS_FRAMES, 11300)
-	now = cap.get(POS_MSEC)
 	paths = []
-	while cap.isOpened() and now < endpos:
+	while cap.isOpened():
 		_, frame = cap.read()
-		now = cap.get(POS_MSEC)
+		now = int(cap.get(POS_MSEC) / 1000)
 		frame_num = int(cap.get(POS_FRAMES))
 		
 		# Draw the obstacles.
@@ -59,14 +56,14 @@ def main():
 			d = np.append(d, 1)
 			cv2.circle(frame, util.to_pixels(Hinv, d), 5, (0,255,0), -1)
 
+		frame_txt = "{:0>2}:{:0>2}".format(now//60, now%60)
+
 		# Check for end of annotations.
 		if frame_num >= len(frames):
-			font = cv2.FONT_HERSHEY_SIMPLEX
-			pt = (5, frame.shape[0]-10)
-			cv2.rectangle(frame, (pt[0]-2, pt[1]+5), (pt[0]+26, pt[1]-11), (0,0,0), -1)
-			cv2.putText(frame, '(eof)', pt, font, .3, (0,255,0), 1)
+			frame_txt += ' (eof)'
 		else:
 			# If we've reached a new timestep, recompute the observations.
+			frame_txt += ' (' + str(frame_num) + ')'
 			t = frames[frame_num]
 			if t >= 0:
 				peds = timesteps[t]
@@ -77,6 +74,16 @@ def main():
 					path = fullpath[0:path_end+1, 1:4]
 					paths.append(path)
 
+		# Inform of the frame number.
+		font = cv2.FONT_HERSHEY_SIMPLEX
+		pt = (5, frame.shape[0]-10)
+		scale = 0.6
+		thickness = 1
+		width, baseline = cv2.getTextSize(frame_txt, font, scale, thickness)
+		baseline += thickness
+		cv2.rectangle(frame, (pt[0], pt[1]+baseline), (pt[0]+width[0], pt[1]-width[1]-2), (0,0,0), -1)
+		cv2.putText(frame, frame_txt, pt, font, scale, (0,255,0), thickness)
+		
 		# Draw in the pedestrians.
 		for path in paths:
 			prev = None
@@ -87,7 +94,6 @@ def main():
 					cv2.line(frame, prev, loc, (255,0,0), 1)
 				prev = loc
 		
-		# TODO inform/halt if reached the end of annotation file.
 		cv2.imshow('frame', frame)
 		key = cv2.waitKey(0)
 		if key & 0xFF == ord('q'):
