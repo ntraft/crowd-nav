@@ -8,7 +8,7 @@ import numpy as np
 
 def to_pixels(Hinv, loc):
 	"""
-	Given H^-1 and (x, y, z) in world coordinates, returns (r, c) in image
+	Given H^-1 and (x, y, z) in world coordinates, returns (c, r) in image
 	pixel indices.
 	"""
 	loc = to_image_frame(Hinv, loc)

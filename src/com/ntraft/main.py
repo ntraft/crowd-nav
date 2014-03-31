@@ -58,17 +58,24 @@ def main():
 		for d in destinations:
 			d = np.append(d, 1)
 			cv2.circle(frame, util.to_pixels(Hinv, d), 5, (0,255,0), -1)
-		
-		# If we've reached a new timestep, recompute the observations.
-		t = frames[frame_num]
-		if t >= 0:
-			peds = timesteps[t]
-			paths = []
-			for ped in peds:
-				fullpath = agents[ped]
-				path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==t)
-				path = fullpath[0:path_end+1, 1:4]
-				paths.append(path)
+
+		# Check for end of annotations.
+		if frame_num >= len(frames):
+			font = cv2.FONT_HERSHEY_SIMPLEX
+			pt = (5, frame.shape[0]-10)
+			cv2.rectangle(frame, (pt[0]-2, pt[1]+5), (pt[0]+26, pt[1]-11), (0,0,0), -1)
+			cv2.putText(frame, '(eof)', pt, font, .3, (0,255,0), 1)
+		else:
+			# If we've reached a new timestep, recompute the observations.
+			t = frames[frame_num]
+			if t >= 0:
+				peds = timesteps[t]
+				paths = []
+				for ped in peds:
+					fullpath = agents[ped]
+					path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==t)
+					path = fullpath[0:path_end+1, 1:4]
+					paths.append(path)
 
 		# Draw in the pedestrians.
 		for path in paths:
