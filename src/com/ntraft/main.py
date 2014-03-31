@@ -10,6 +10,7 @@ import argparse
 import cv2
 import numpy as np
 import com.ntraft.ewap as ewap
+import com.ntraft.util as util
 
 POS_MSEC = cv2.cv.CV_CAP_PROP_POS_MSEC
 POS_FRAMES = cv2.cv.CV_CAP_PROP_POS_FRAMES
@@ -56,9 +57,7 @@ def main():
 		# Draw destinations.
 		for d in destinations:
 			d = np.append(d, 1)
-			d = np.dot(Hinv, d)
-			d = (d/d[2]).astype(int)
-			cv2.circle(frame, (d[1], d[0]), 5, (0,255,0), -1)
+			cv2.circle(frame, util.to_pixels(Hinv, d), 5, (0,255,0), -1)
 		
 		# If we've reached a new timestep, recompute the observations.
 		t = frames[frame_num]
@@ -75,10 +74,7 @@ def main():
 		for path in paths:
 			prev = None
 			for loc in path:
-				loc = np.dot(Hinv, loc) # to camera frame
-				loc /= loc[2] # to pixels (from millimeters)
-				loc = loc.astype(int) # discretize
-				loc = (loc[1], loc[0])
+				loc = util.to_pixels(Hinv, loc)
 				cv2.circle(frame, loc, 3, (255,0,0), -1)
 				if prev:
 					cv2.line(frame, prev, loc, (255,0,0), 1)
