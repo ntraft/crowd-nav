@@ -14,6 +14,9 @@ import com.ntraft.util as util
 
 POS_MSEC = cv2.cv.CV_CAP_PROP_POS_MSEC
 POS_FRAMES = cv2.cv.CV_CAP_PROP_POS_FRAMES
+LEFT = 2
+RIGHT = 3
+ESC = 27
 
 def main():
 	# Parse command-line arguments.
@@ -44,9 +47,9 @@ def main():
 	cap.set(POS_FRAMES, 11300)
 	paths = []
 	while cap.isOpened():
-		_, frame = cap.read()
-		now = int(cap.get(POS_MSEC) / 1000)
 		frame_num = int(cap.get(POS_FRAMES))
+		now = int(cap.get(POS_MSEC) / 1000)
+		_, frame = cap.read()
 		
 		# Draw the obstacles.
 		frame = np.maximum(frame, cv2.cvtColor(obs_map, cv2.COLOR_GRAY2BGR))
@@ -95,9 +98,11 @@ def main():
 				prev = loc
 		
 		cv2.imshow('frame', frame)
-		key = cv2.waitKey(0)
-		if key & 0xFF == ord('q'):
+		key = cv2.waitKey(0) & 0xFF
+		if key == ord('q') or key == ESC:
 			break
+		elif key == LEFT:
+			cap.set(POS_FRAMES, frame_num-1)
 	
 	cap.release()
 	cv2.destroyAllWindows()
