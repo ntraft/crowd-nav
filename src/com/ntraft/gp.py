@@ -25,11 +25,6 @@ N = 10		# number of training points
 n = 500		# number of test points
 s = 0.00005	# noise variance
 
-# We take the ultimate destination to be the mean, so that all the paths
-# "gravitate" toward that location.
-xdest = 4	# destination x coord
-ydest = 2	# destination x coord
-
 # Sample some input points and noisy versions of the function evaluated at
 # these points. 
 T = np.random.uniform(-5, 5, size=(N,1))
