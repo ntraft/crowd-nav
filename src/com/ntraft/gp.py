@@ -11,7 +11,7 @@ OBS_NOISE = 0.00005	# noise variance
 def sq_exp(a, b):
 	""" GP squared exponential kernel """
 	kernelParameter = 1 # l^2 in the formulas
-	sqdist = np.sum(a**2,1).reshape(-1,1) + np.sum(b**2,1) - 2*np.dot(a, b.T)
+	sqdist = (a**2).reshape(-1,1) + b**2 - 2*np.outer(a, b)
 	return np.exp(-.5 * (1/kernelParameter) * sqdist)
 
 class GaussianProcess:
@@ -24,9 +24,9 @@ class GaussianProcess:
 		'''
 		Creates a new Gaussian process from the given observations.
 		'''
-		zt = observations[:,0]
-		zx = observations[:,1]
-		zy = observations[:,2]
+		zt = observations[0,:]
+		zx = observations[1,:]
+		zy = observations[2,:]
 		self.timepoints = timepoints
 		
 		# covariance of observations
@@ -49,7 +49,7 @@ class GaussianProcess:
 		sz = (len(self.timepoints), n)
 		x_post = self.xmu.reshape(-1,1) + np.dot(self.L, np.random.normal(size=sz))
 		y_post = self.ymu.reshape(-1,1) + np.dot(self.L, np.random.normal(size=sz))
-		return np.hstack((self.timepoints, x_post, y_post))
+		return np.dstack((x_post, y_post))
 
 
 if __name__ == "__main__":
@@ -68,18 +68,20 @@ if __name__ == "__main__":
 	# these points.
 	N = 10		# number of training points
 	n = 500		# number of test points
-	T = np.random.uniform(-5, 5, size=(N,1))
+	T = np.random.uniform(-5, 5, size=(N,))
 	x = x1(T) + OBS_NOISE*np.random.randn(N)
 	y = x2(T) + OBS_NOISE*np.random.randn(N)
-	z = np.hstack((T, x, y))
+	z = np.vstack((T, x, y)) # TODO doesn't work. row_stack?
 	
 	# points we're going to make predictions at.
-	Ttest = np.linspace(-5, 5, n).reshape(-1,1)
+	Ttest = np.linspace(-5, 5, n)
 	
 	# draw 10 samples from the posterior
 	gp = GaussianProcess(z, Ttest)
 	samples = gp.sample(10)
 	pl.clf()
-	pl.plot(samples[1], samples[2])
+	pl.plot(samples[:,:,0], samples[:,:,1])
 	pl.title('Ten samples from the GP posterior')
 	pl.axis([-5, 5, -3, 3])
+	
+	pl.show()
