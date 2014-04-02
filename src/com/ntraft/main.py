@@ -47,6 +47,7 @@ def main():
 # 	cap.set(POS_MSEC, seekpos)
 	cap.set(POS_FRAMES, 11300)
 	paths = []
+	predictions = []
 	while cap.isOpened():
 		frame_num = int(cap.get(POS_FRAMES))
 		now = int(cap.get(POS_MSEC) / 1000)
@@ -99,13 +100,12 @@ def main():
 		
 		# Draw in the pedestrians.
 		for path in paths:
-			prev = None
-			for loc in path:
-				loc = util.to_pixels(Hinv, loc)
-				cv2.circle(frame, loc, 3, (255,0,0), -1)
-				if prev:
-					cv2.line(frame, prev, loc, (255,0,0), 1)
-				prev = loc
+			draw_path(frame, path, Hinv, (255,0,0))
+		
+		# Draw predictions for a single agent.
+		if predictions:
+			for i in range(util.NUM_SAMPLES):
+				draw_path(frame, predictions[0][:,i,:], Hinv, (192,)*3)
 		
 		cv2.imshow('frame', frame)
 		key = cv2.waitKey(0) & 0xFF
@@ -116,6 +116,15 @@ def main():
 	
 	cap.release()
 	cv2.destroyAllWindows()
+
+def draw_path(frame, path, Hinv, color):
+	prev = None
+	for loc in path:
+		loc = util.to_pixels(Hinv, loc)
+		cv2.circle(frame, loc, 3, color, -1)
+		if prev:
+			cv2.line(frame, prev, loc, color, 1)
+		prev = loc
 
 def parse_args():
 	parser = argparse.ArgumentParser()
