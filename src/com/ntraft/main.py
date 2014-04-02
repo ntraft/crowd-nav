@@ -10,6 +10,7 @@ import argparse
 import cv2
 import numpy as np
 import com.ntraft.ewap as ewap
+from com.ntraft.gp import GaussianProcess
 import com.ntraft.util as util
 
 POS_MSEC = cv2.cv.CV_CAP_PROP_POS_MSEC
@@ -17,6 +18,7 @@ POS_FRAMES = cv2.cv.CV_CAP_PROP_POS_FRAMES
 LEFT = 2
 RIGHT = 3
 ESC = 27
+NUM_SAMPLES = 10
 
 def main():
 	# Parse command-line arguments.
@@ -71,11 +73,18 @@ def main():
 			if t >= 0:
 				peds = timesteps[t]
 				paths = []
+				predictions = []
 				for ped in peds:
+					# Get the full and past paths of the agent.
 					fullpath = agents[ped]
 					path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==t)
-					path = fullpath[0:path_end+1, 1:4]
-					paths.append(path)
+					path = fullpath[0:path_end+1,:]
+					paths.append(path[:,1:4])
+					# Predict possible paths for the agent.
+					t_future = fullpath[path_end:,0]
+					gp = GaussianProcess(path, t_future)
+					samples = gp.sample(NUM_SAMPLES)
+					predictions.append(samples)
 
 		# Inform of the frame number.
 		font = cv2.FONT_HERSHEY_SIMPLEX
