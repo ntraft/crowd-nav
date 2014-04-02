@@ -4,7 +4,6 @@ Various utility functions.
 @author: ntraft
 '''
 from __future__ import division
-from __future__ import range
 import numpy as np
 
 NUM_SAMPLES = 10	# number of particles
@@ -67,7 +66,7 @@ def resample(allpriors, weights):
 			beta -= weights[windex]
 			windex = (windex+1) % N
 		# We've selected a sample. Now copy that sample for all agents.
-		for agent in len(allpriors):
+		for agent in range(len(allpriors)):
 			allposteriors[agent][:,i,:] = allpriors[agent][:,windex,:]
 	return allposteriors
 
