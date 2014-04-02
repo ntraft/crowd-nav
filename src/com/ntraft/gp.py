@@ -24,9 +24,9 @@ class GaussianProcess:
 		'''
 		Creates a new Gaussian process from the given observations.
 		'''
-		zt = observations[0,:]
-		zx = observations[1,:]
-		zy = observations[2,:]
+		zt = observations[:,0]
+		zx = observations[:,1]
+		zy = observations[:,2]
 		self.timepoints = timepoints
 		
 		# covariance of observations
@@ -71,7 +71,7 @@ if __name__ == "__main__":
 	T = np.random.uniform(-5, 5, size=(N,))
 	x = x1(T) + OBS_NOISE*np.random.randn(N)
 	y = x2(T) + OBS_NOISE*np.random.randn(N)
-	z = np.vstack((T, x, y)) # TODO doesn't work. row_stack?
+	z = np.column_stack((T, x, y))
 	
 	# points we're going to make predictions at.
 	Ttest = np.linspace(-5, 5, n)
