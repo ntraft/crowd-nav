@@ -5,8 +5,7 @@ Created on Apr 1, 2014
 '''
 from __future__ import division
 import numpy as np
-
-OBS_NOISE = 0.00005	# noise variance
+from util import OBS_NOISE
 
 def sq_exp(a, b):
 	""" GP squared exponential kernel """

@@ -18,7 +18,6 @@ POS_FRAMES = cv2.cv.CV_CAP_PROP_POS_FRAMES
 LEFT = 2
 RIGHT = 3
 ESC = 27
-NUM_SAMPLES = 10
 
 def main():
 	# Parse command-line arguments.
@@ -83,8 +82,10 @@ def main():
 					# Predict possible paths for the agent.
 					t_future = fullpath[path_end:,0]
 					gp = GaussianProcess(path, t_future)
-					samples = gp.sample(NUM_SAMPLES)
+					samples = gp.sample(util.NUM_SAMPLES)
 					predictions.append(samples)
+				weights = util.interaction(predictions)
+				predictions = util.resample(predictions, weights)
 
 		# Inform of the frame number.
 		font = cv2.FONT_HERSHEY_SIMPLEX
