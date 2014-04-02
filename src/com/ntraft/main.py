@@ -105,7 +105,9 @@ def main():
 		# Draw predictions for a single agent.
 		if predictions:
 			for i in range(util.NUM_SAMPLES):
-				draw_path(frame, predictions[0][:,i,:], Hinv, (192,)*3)
+				path = predictions[0][:,i,:]
+				path = np.column_stack((path, np.ones(path.shape[0])))
+				draw_path(frame, path, Hinv, (192,)*3)
 		
 		cv2.imshow('frame', frame)
 		key = cv2.waitKey(0) & 0xFF
