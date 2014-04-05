@@ -15,6 +15,8 @@ import com.ntraft.util as util
 
 POS_MSEC = cv2.cv.CV_CAP_PROP_POS_MSEC
 POS_FRAMES = cv2.cv.CV_CAP_PROP_POS_FRAMES
+UP = 0
+DOWN = 1
 LEFT = 2
 RIGHT = 3
 ESC = 27
@@ -48,6 +50,7 @@ def main():
 	cap.set(POS_FRAMES, 11300)
 	paths = []
 	predictions = []
+	agent_num = 0
 	while cap.isOpened():
 		frame_num = int(cap.get(POS_FRAMES))
 		now = int(cap.get(POS_MSEC) / 1000)
@@ -78,7 +81,10 @@ def main():
 					# Get the full and past paths of the agent.
 					fullpath = agents[ped]
 					path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==t)
-					path = fullpath[0:path_end+1,:]
+					points = list(range(0,path_end+1))
+					if path_end < fullpath.shape[0]:
+						points += [-1] # Add the destination point.
+					path = fullpath[np.ix_(points)]
 					paths.append(path[:,1:4])
 					# Predict possible paths for the agent.
 					t_future = fullpath[path_end:,0]
@@ -105,9 +111,9 @@ def main():
 		# Draw predictions for a single agent.
 		if predictions:
 			for i in range(util.NUM_SAMPLES):
-				path = predictions[0][:,i,:]
+				path = predictions[agent_num%len(predictions)][:,i,:]
 				path = np.column_stack((path, np.ones(path.shape[0])))
-				draw_path(frame, path, Hinv, (192,)*3)
+				draw_path(frame, path, Hinv, (0,192,192))
 		
 		cv2.imshow('frame', frame)
 		key = cv2.waitKey(0) & 0xFF
@@ -115,6 +121,12 @@ def main():
 			break
 		elif key == LEFT:
 			cap.set(POS_FRAMES, frame_num-1)
+		elif key == UP:
+			agent_num += 1
+			cap.set(POS_FRAMES, frame_num)
+		elif key == DOWN:
+			agent_num -= 1
+			cap.set(POS_FRAMES, frame_num)
 	
 	cap.release()
 	cv2.destroyAllWindows()
