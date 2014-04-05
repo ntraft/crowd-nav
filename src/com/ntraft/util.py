@@ -8,7 +8,7 @@ import numpy as np
 
 NUM_SAMPLES = 10	# number of particles
 OBS_NOISE = 0.00005	# noise variance
-ALPHA = 0.99		# repelling force
+ALPHA = 0.8			# repelling force
 H = 24				# safety distance
 
 def to_pixels(Hinv, loc):
@@ -29,7 +29,8 @@ def to_image_frame(Hinv, loc):
 
 def rbf(loc1, loc2):
 	dist = np.linalg.norm(loc2 - loc1)
-	return 1 - ALPHA*np.exp(-dist / (2*H**2))
+	dist *= 100 # Hack for now, to get distances into a sensible range.
+	return 1 - ALPHA*np.exp(-(dist**2) / (2*H**2))
 
 def interaction(allpriors):
 	"""
@@ -44,8 +45,9 @@ def interaction(allpriors):
 			for k in range(j+1, num_agents):
 				agent_k = allpriors[k]
 				for t in range(min(len(agent_j), len(agent_k))):
-					weights[i] *= rbf(agent_j[t], agent_k[t])
+					weights[i] *= rbf(agent_j[t,i], agent_k[t,i])
 	# Renormalize
+	# TODO deal with the case when all paths are weighted to 0
 	weights /= np.sum(weights)
 	return weights
 
