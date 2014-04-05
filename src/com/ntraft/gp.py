@@ -9,7 +9,7 @@ from util import OBS_NOISE
 
 def sq_exp(a, b):
 	""" GP squared exponential kernel """
-	kernelParameter = 1 # l^2 in the formulas
+	kernelParameter = 10 # l^2 in the formulas
 	sqdist = (a**2).reshape(-1,1) + b**2 - 2*np.outer(a, b)
 	return np.exp(-.5 * (1/kernelParameter) * sqdist)
 
