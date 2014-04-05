@@ -23,7 +23,7 @@ class GaussianProcess:
 		
 		# covariance of observations
 		K = kernel(zt, zt)
-		L = np.linalg.cholesky(K + OBS_NOISE*np.eye(len(zt)))
+		L = np.linalg.cholesky(K)
 		
 		# compute the mean at our test points
 		Lk = np.linalg.solve(L, kernel(zt, timepoints))

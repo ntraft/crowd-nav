@@ -27,7 +27,10 @@ z = np.column_stack((T, x, y))
 Ttest = np.linspace(-5, 5, n)
 
 # Build our Gaussian process.
-gp = GaussianProcess(z, Ttest)
+# kernel = cov.summed_kernel(cov.sq_exp_kernel(1, 1), cov.noise_kernel(OBS_NOISE))
+kernel = cov.summed_kernel(cov.sq_exp_kernel(5, 1), cov.noise_kernel(0))
+kernel = cov.sq_exp_kernel(5, 1)
+gp = GaussianProcess(z, Ttest, kernel)
 
 # PLOTS:
 
