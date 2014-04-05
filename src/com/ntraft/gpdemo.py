@@ -29,11 +29,29 @@ Ttest = np.linspace(-5, 5, n)
 # Build our Gaussian process.
 gp = GaussianProcess(z, Ttest)
 
+# PLOTS:
+
+# draw samples from the prior at our test points.
+samples = gp.sample_prior(10)
+pl.figure(1)
+pl.plot(samples[:,:,0], samples[:,:,1])
+pl.title('Ten samples from the GP prior')
+pl.axis([-5, 5, -3, 3])
+
 # draw 10 samples from the posterior
 samples = gp.sample(10)
-pl.clf()
+pl.figure(2)
 pl.plot(samples[:,:,0], samples[:,:,1])
 pl.title('Ten samples from the GP posterior')
+pl.axis([-5, 5, -3, 3])
+
+# illustrate the possible paths.
+pl.figure(3)
+pl.plot(x, y, 'r+', ms=20)
+pl.plot(x1(Ttest), x2(Ttest), 'b-')
+# pl.gca().fill_between(Ttest.flat, mu-3*s, mu+3*s, color="#dddddd") # how to draw this?
+pl.plot(gp.xmu, gp.ymu, 'r--', lw=2)
+pl.title('Mean predictions plus 3 st.deviations')
 pl.axis([-5, 5, -3, 3])
 
 pl.show()

@@ -32,11 +32,20 @@ class GaussianProcess:
 		
 		# compute the variance at our test points
 		K_ = kernel(timepoints, timepoints)
-		self.L = np.linalg.cholesky(K_ + 1e-6*np.eye(K_.shape[0]) - np.dot(Lk.T, Lk))
+		K_ += 1e-6*np.eye(K_.shape[0])
+		self.prior_L = np.linalg.cholesky(K_)
+		self.L = np.linalg.cholesky(K_ - np.dot(Lk.T, Lk))
 	
 	def sample(self, n=1):
-		''' Draw n samples from the gaussian process. '''
+		''' Draw n samples from the gaussian process posterior. '''
 		sz = (len(self.timepoints), n)
 		x_post = self.xmu.reshape(-1,1) + np.dot(self.L, np.random.normal(size=sz))
 		y_post = self.ymu.reshape(-1,1) + np.dot(self.L, np.random.normal(size=sz))
+		return np.dstack((x_post, y_post))
+	
+	def sample_prior(self, n=1):
+		''' Draw n samples from the gaussian process prior. '''
+		sz = (len(self.timepoints), n)
+		x_post = np.dot(self.prior_L, np.random.normal(size=sz))
+		y_post = np.dot(self.prior_L, np.random.normal(size=sz))
 		return np.dstack((x_post, y_post))
