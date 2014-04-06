@@ -6,7 +6,6 @@ Created on Apr 1, 2014
 from __future__ import division
 import numpy as np
 import com.ntraft.covariance as cov
-from util import OBS_NOISE
 
 class GaussianProcess:
 	'''
@@ -23,6 +22,7 @@ class GaussianProcess:
 		
 		# covariance of observations
 		K = kernel(zt, zt)
+		K += 1e-6*np.eye(K.shape[0])
 		L = np.linalg.cholesky(K)
 		
 		# compute the mean at our test points
