@@ -30,8 +30,14 @@ Ttest = np.linspace(-5, 5, n)
 
 # Build our Gaussian process.
 # kernel = cov.sq_exp_kernel(3.2, 1)
-kernel = cov.summed_kernel(cov.sq_exp_kernel(3.2, 1), cov.noise_kernel(s))
-# kernel = cov.summed_kernel(cov.sq_exp_kernel(3.162, 1), cov.noise_kernel(0.31))
+# kernel = cov.summed_kernel(cov.sq_exp_kernel(3.2, 1), cov.noise_kernel(s))
+kernel = cov.summed_kernel(
+	cov.matern_kernel(2.28388, 2.52288),
+	cov.linear_kernel(2.87701),
+	cov.noise_kernel(0.24071)
+)
+# kernel = cov.matern_kernel(2.28388, 2.52288)
+# kernel = cov.linear_kernel(-2.87701)
 gp = GaussianProcess(z, Ttest, kernel)
 
 # PLOTS:
