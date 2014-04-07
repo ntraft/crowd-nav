@@ -1,3 +1,4 @@
+# coding=utf-8
 '''
 Various Gaussian Process kernel functions.
 
@@ -42,10 +43,10 @@ def sq_exp_kernel(l=1, sigma2=1):
 
 def matern_kernel(l, sigma2=1):
 	'''
-	Matern kernel. See "Gaussian Processes for Machine Learning", by
+	Matérn kernel. See "Gaussian Processes for Machine Learning", by
 	Rasmussen and Williams, Chapter 4.
 	
-	Specifically, this kernel is Matern class with v=5/2, multiplied by an
+	Specifically, this kernel is Matérn class with v=5/2, multiplied by an
 	optional signal variance sigma2.
 	'''
 	def f(a, b):
