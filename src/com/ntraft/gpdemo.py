@@ -11,23 +11,24 @@ import matplotlib.pyplot as pl
 
 # This is the true unknown function we are trying to approximate
 x1 = lambda x: x.flatten() # y = x
-# x2 = lambda x: x.flatten() # y = x
+x2 = lambda x: x.flatten() # y = x
 # x2 = lambda x: 2*np.ones_like(x) # constant
-x2 = lambda x: np.sin(0.9*x).flatten() # sin
+# x2 = lambda x: np.sin(0.9*x).flatten() # sin
 
 # Sample some input points and noisy versions of the function evaluated at
 # these points.
-N = 100		# number of training points
-n = 500		# number of test points
-s = 0.00005	# noise variance
-T = np.random.uniform(-5, 0, size=(N,))
-T[-1] = 4.8 # set a goal point
+N = 20		# number of training points
+n = 30		# number of test points
+s = 0.00000	# noise variance
+# T = np.random.uniform(-5, 0, size=(N,))
+T = np.linspace(-20, 0, N)
+T[-1] = 39 # set a goal point
 x = x1(T) + s*np.random.randn(N)
 y = x2(T) + s*np.random.randn(N)
 z = np.column_stack((T, x, y))
 
 # points we're going to make predictions at.
-Ttest = np.linspace(-5, 5, n)
+Ttest = np.linspace(0, 40, n)
 
 # Build our Gaussian process.
 # kernel = cov.sq_exp_kernel(3.2, 1)
@@ -57,22 +58,27 @@ pl.plot(xs, ys)
 pl.title('Ten samples from the GP prior')
 
 # draw 10 samples from the posterior
-xs = xgp.sample(10)
-ys = ygp.sample(10)
+xs = xgp.sample(5)
+ys = ygp.sample(5)
 pl.figure(2)
 pl.subplots_adjust(0.05, 0.1, 0.95, 0.9)
 pl.subplot(1,2,1)
+pl.plot(x, y, 'yo', ms=8)
 pl.plot(xs, ys)
-pl.title('Ten samples from the GP posterior')
-pl.axis([-5, 5, -3, 3])
+pl.title('Five samples from the GP posterior')
+pl.axis([-30, 70, -30, 70])
 
 # illustrate the possible paths.
 pl.subplot(1,2,2)
-pl.plot(x1(Ttest), x2(Ttest), 'b-')
+ns = 1000
 pl.plot(x, y, 'yo', ms=8)
-# pl.gca().fill_between(Ttest.flat, mu-3*s, mu+3*s, color="#dddddd") # how to draw this?
-pl.plot(xgp.mu, ygp.mu, 'r--', lw=2)
-pl.title('Mean predictions')
-pl.axis([-5, 5, -3, 3])
+xmean = np.mean(xgp.sample(ns), 1)
+ymean = np.mean(ygp.sample(ns), 1)
+pl.plot(xmean, ymean, 'r--', lw=2)
+pl.title('Mean of {} samples'.format(ns))
+# pl.plot(x1(Ttest), x2(Ttest), 'b-')
+# pl.plot(xgp.mu, ygp.mu, 'r--', lw=2)
+# pl.title('Mean predictions')
+pl.axis([-30, 70, -30, 70])
 
 pl.show()
