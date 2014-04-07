@@ -18,19 +18,19 @@ class GaussianProcess:
 		self.timepoints = testpoints
 		
 		# covariance of observations
-		K = kernel(zx, zx)
+		K = kernel(zx, zx, 'train')
 		K += 1e-9*np.eye(K.shape[0])
 		L = np.linalg.cholesky(K)
 		
 		# compute the mean at our test points
-		Lk = np.linalg.solve(L, kernel(zx, testpoints))
-		self.mu = np.dot(Lk.T, np.linalg.solve(L, zy))
+		v = np.linalg.solve(L, kernel(zx, testpoints, 'cross'))
+		self.mu = np.dot(v.T, np.linalg.solve(L, zy))
 		
 		# compute the variance at our test points
-		K_ = kernel(testpoints, testpoints)
-		K_ += 1e-9*np.eye(K_.shape[0])
-		self.prior_L = np.linalg.cholesky(K_)
-		self.L = np.linalg.cholesky(K_ - np.dot(Lk.T, Lk))
+		Kss = kernel(testpoints, testpoints, 'test')
+		Kss += 1e-9*np.eye(Kss.shape[0])
+		self.prior_L = np.linalg.cholesky(Kss)
+		self.L = np.linalg.cholesky(Kss - np.dot(v.T, v)) # TODO not positive definite?
 	
 	def sample(self, n=1):
 		'''
