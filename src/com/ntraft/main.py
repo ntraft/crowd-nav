@@ -9,10 +9,18 @@ import os
 import argparse
 import cv2
 import numpy as np
+import matplotlib
+# The 'MacOSX' backend appears to have some issues on Mavericks.
+import sys
+if sys.platform.startswith('darwin'):
+	matplotlib.use('TkAgg')
+import matplotlib.pyplot as pl
+
 import com.ntraft.ewap as ewap
 from com.ntraft.gp import ParametricGaussianProcess
 import com.ntraft.covariance as cov
 import com.ntraft.util as util
+from numpy.core.numeric import inf
 
 POS_MSEC = cv2.cv.CV_CAP_PROP_POS_MSEC
 POS_FRAMES = cv2.cv.CV_CAP_PROP_POS_FRAMES
@@ -62,6 +70,12 @@ def main():
 # 	endpos = 8.7 * 60 * 1000 # About 8 mins 40 secs
 # 	cap.set(POS_MSEC, seekpos)
 	cap.set(POS_FRAMES, 11300)
+	pl.ion()
+	pl.subplot(1,2,1)
+	pl.title('Path Length')
+	pl.subplot(1,2,2)
+	pl.title('Minimum Safety')
+	
 	paths = []
 	agent_num = 0
 	last_t = -1
@@ -90,6 +104,14 @@ def main():
 			if t >= 0 and t != last_t:
 				last_t = t
 				paths, true_paths, predictions, MAP = make_predictions(t, timesteps, agents)
+				ped_scores, IGP_scores = calc_scores(true_paths, MAP)
+				pl.subplot(1,2,1)
+				pl.scatter(IGP_scores[:,0], ped_scores[:,0])
+				pl.subplot(1,2,2)
+				pl.scatter(IGP_scores[:,1], ped_scores[:,1])
+				pl.show()
+				for i in range(ped_scores.shape[0]):
+					print 'Agent', i, ': Pedestrian:', ped_scores[i], 'IGP:', IGP_scores[i]
 
 		# Inform of the frame number.
 		font = cv2.FONT_HERSHEY_SIMPLEX
@@ -165,6 +187,27 @@ def make_predictions(t, timesteps, agents):
 
 def get_final_path(samples):
 	return np.column_stack((np.mean(samples, 1), np.ones(samples.shape[0])))
+
+def calc_score(path, other_paths):
+	length = 0
+	safety = inf
+	prev_loc = None
+	for t in range(len(path)):
+		loc = path[t]
+		if prev_loc is not None:
+			length += util.dist(prev_loc, loc)
+		prev_loc = loc
+		for o in other_paths:
+			if t < len(o):
+				dist = util.dist(o[t], loc)
+				if dist < safety:
+					safety = dist
+	return (length, safety)
+
+def calc_scores(true_paths, MAP):
+	robot_scores = np.array([calc_score(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(MAP)])
+	ped_scores = np.array([calc_score(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(true_paths)])
+	return ped_scores, robot_scores
 
 def draw_path(frame, path, Hinv, color):
 	prev = None

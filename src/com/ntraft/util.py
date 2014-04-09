@@ -27,10 +27,14 @@ def to_image_frame(Hinv, loc):
 	loc = np.dot(Hinv, loc) # to camera frame
 	return (loc/loc[2]).astype(int) # to pixels (from millimeters)
 
+
+def dist(loc1, loc2):
+	return np.linalg.norm(loc2 - loc1)
+
 def rbf(loc1, loc2):
-	dist = np.linalg.norm(loc2 - loc1)
-	dist *= 100 # Hack for now, to get distances into a sensible range.
-	return 1 - ALPHA*np.exp(-(dist**2) / (2*H**2))
+	d = dist(loc1, loc2)
+	d *= 100 # Hack for now, to get distances into a sensible range.
+	return 1 - ALPHA*np.exp(-(d**2) / (2*H**2))
 
 def interaction(allpriors):
 	"""
