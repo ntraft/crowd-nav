@@ -63,7 +63,6 @@ def main():
 # 	cap.set(POS_MSEC, seekpos)
 	cap.set(POS_FRAMES, 11300)
 	paths = []
-	predictions = []
 	agent_num = 0
 	last_t = -1
 	while cap.isOpened():
@@ -90,25 +89,7 @@ def main():
 			t = frames[frame_num]
 			if t >= 0 and t != last_t:
 				last_t = t
-				peds = timesteps[t]
-				paths = []
-				predictions = []
-				for ped in peds:
-					# Get the full and past paths of the agent.
-					fullpath = agents[ped]
-					path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==t)
-					points = list(range(0,path_end+1))
-					if path_end < fullpath.shape[0]:
-						points += [-1] # Add the destination point.
-					path = fullpath[np.ix_(points)]
-					paths.append(path[:,1:4])
-					# Predict possible paths for the agent.
-					t_future = fullpath[path_end:,0]
-					gp = ParametricGaussianProcess(path, t_future, xkernel, ykernel)
-					samples = gp.sample(util.NUM_SAMPLES)
-					predictions.append(samples)
-				weights = util.interaction(predictions)
-				predictions = util.resample(predictions, weights)
+				paths, true_paths, predictions, MAP = make_predictions(t, timesteps, agents)
 
 		# Inform of the frame number.
 		font = cv2.FONT_HERSHEY_SIMPLEX
@@ -120,17 +101,20 @@ def main():
 		cv2.rectangle(frame, (pt[0], pt[1]+baseline), (pt[0]+width[0], pt[1]-width[1]-2), (0,0,0), -1)
 		cv2.putText(frame, frame_txt, pt, font, scale, (0,255,0), thickness)
 		
-		# Draw in the pedestrians.
-		for path in paths:
-			draw_path(frame, path, Hinv, (255,0,0))
-		
-		# Draw predictions for a single agent.
-		if predictions:
+		# Draw in the pedestrians, if we have them.
+		if paths:
+			# The paths they've already taken.
+			for path in paths:
+				draw_path(frame, path, Hinv, (255,0,0))
+			
+			# The ground truth for a single agent.
+			draw_path(frame, true_paths[agent_num%len(true_paths)], Hinv, (192,0,192))
+			
+			# The predictions for a single agent.
 			if DRAW_FINAL_PATH:
-				path = np.mean(predictions[agent_num%len(predictions)], 1)
-				path = np.column_stack((path, np.ones(path.shape[0])))
+				path = MAP[agent_num%len(MAP)]
 				draw_path(frame, path, Hinv, (0,192,192))
-			else:
+			else: # draw individual samples
 				for i in range(util.NUM_SAMPLES):
 					path = predictions[agent_num%len(predictions)][:,i,:]
 					path = np.column_stack((path, np.ones(path.shape[0])))
@@ -151,6 +135,36 @@ def main():
 	
 	cap.release()
 	cv2.destroyAllWindows()
+
+def make_predictions(t, timesteps, agents):
+	peds = timesteps[t]
+	past_paths = []
+	true_paths = []
+	predictions = []
+	for ped in peds:
+		# Get the full and past paths of the agent.
+		fullpath = agents[ped]
+		path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==t)
+		points = list(range(0,path_end+1))
+		if path_end < fullpath.shape[0]:
+			points += [-1] # Add the destination point.
+		past_plus_dest = fullpath[np.ix_(points)]
+		past_paths.append(past_plus_dest[:,1:4])
+		true_paths.append(fullpath[path_end:,1:4])
+		
+		# Predict possible paths for the agent.
+		t_future = fullpath[path_end:,0]
+		gp = ParametricGaussianProcess(past_plus_dest, t_future, xkernel, ykernel)
+		samples = gp.sample(util.NUM_SAMPLES)
+		predictions.append(samples)
+	
+	weights = util.interaction(predictions)
+	predictions = util.resample(predictions, weights)
+	MAP = [get_final_path(p) for p in predictions]
+	return (past_paths, true_paths, predictions, MAP)
+
+def get_final_path(samples):
+	return np.column_stack((np.mean(samples, 1), np.ones(samples.shape[0])))
 
 def draw_path(frame, path, Hinv, color):
 	prev = None
