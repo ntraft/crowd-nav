@@ -30,7 +30,7 @@ class GaussianProcess:
 		Kss = kernel(testpoints, testpoints, 'test')
 		Kss += 1e-9*np.eye(Kss.shape[0])
 		self.prior_L = np.linalg.cholesky(Kss)
-		self.L = np.linalg.cholesky(Kss - np.dot(v.T, v)) # TODO not positive definite?
+		self.L = np.linalg.cholesky(Kss - np.dot(v.T, v))
 	
 	def sample(self, n=1):
 		'''

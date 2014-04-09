@@ -26,7 +26,7 @@ def sq_exp_iso(a, b, kind, l, sigma2=1):
 		return sigma2 * np.exp(-.5 * sq_dist(a/l, b/l))
 
 def matern(a, b, kind, l, sigma2=1):
-	if kind == 'test':
+	if kind == 'test' and False:
 		return sigma2
 	else:
 		a = np.sqrt(5) * a/l;
@@ -35,8 +35,8 @@ def matern(a, b, kind, l, sigma2=1):
 		return sigma2 * np.exp(-np.sqrt(r)) * (1 + np.sqrt(r) + r/3);
 
 def linear(a, b, kind, sigma2=1):
-	if kind == 'test':
-		r = np.sum(a*b)
+	if kind == 'test' and False:
+		r = np.sum((a*b).reshape(-1,1), 1).reshape(-1,1)
 	else:
 		r = np.outer(a, b)
 	return (1 + r) * sigma2

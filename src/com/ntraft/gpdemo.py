@@ -21,14 +21,14 @@ N = 20		# number of training points
 n = 30		# number of test points
 s = 0.00000	# noise variance
 # T = np.random.uniform(-5, 0, size=(N,))
-T = np.linspace(-20, 0, N)
-T[-1] = 39 # set a goal point
+T = np.linspace(-10, 0, N)
+T[-1] = 19.6 # set a goal point
 x = x1(T) + s*np.random.randn(N)
 y = x2(T) + s*np.random.randn(N)
 z = np.column_stack((T, x, y))
 
 # points we're going to make predictions at.
-Ttest = np.linspace(0, 40, n)
+Ttest = np.linspace(0, 20, n)
 
 # Build our Gaussian process.
 # kernel = cov.sq_exp_kernel(3.2, 1)
@@ -66,7 +66,7 @@ pl.subplot(1,2,1)
 pl.plot(x, y, 'yo', ms=8)
 pl.plot(xs, ys)
 pl.title('Five samples from the GP posterior')
-pl.axis([-30, 70, -30, 70])
+pl.axis([-10, 25, -10, 25])
 
 # illustrate the possible paths.
 pl.subplot(1,2,2)
@@ -79,6 +79,6 @@ pl.title('Mean of {} samples'.format(ns))
 # pl.plot(x1(Ttest), x2(Ttest), 'b-')
 # pl.plot(xgp.mu, ygp.mu, 'r--', lw=2)
 # pl.title('Mean predictions')
-pl.axis([-30, 70, -30, 70])
+pl.axis([-10, 25, -10, 25])
 
 pl.show()
