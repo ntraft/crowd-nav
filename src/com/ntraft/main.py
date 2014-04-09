@@ -10,7 +10,8 @@ import argparse
 import cv2
 import numpy as np
 import com.ntraft.ewap as ewap
-from com.ntraft.gp import GaussianProcess
+from com.ntraft.gp import ParametricGaussianProcess
+import com.ntraft.covariance as cov
 import com.ntraft.util as util
 
 POS_MSEC = cv2.cv.CV_CAP_PROP_POS_MSEC
@@ -20,6 +21,19 @@ DOWN = 1
 LEFT = 2
 RIGHT = 3
 ESC = 27
+
+DRAW_FINAL_PATH = True
+
+xkernel = cov.summed_kernel(
+	cov.matern_kernel(33.542, 47517),
+	cov.linear_kernel(315.46),
+	cov.noise_kernel(0.53043)
+)
+ykernel = cov.summed_kernel(
+	cov.matern_kernel(9.8147, 155.36),
+	cov.linear_kernel(17299),
+	cov.noise_kernel(0.61790)
+)
 
 def main():
 	# Parse command-line arguments.
@@ -51,6 +65,7 @@ def main():
 	paths = []
 	predictions = []
 	agent_num = 0
+	last_t = -1
 	while cap.isOpened():
 		frame_num = int(cap.get(POS_FRAMES))
 		now = int(cap.get(POS_MSEC) / 1000)
@@ -70,10 +85,11 @@ def main():
 		if frame_num >= len(frames):
 			frame_txt += ' (eof)'
 		else:
-			# If we've reached a new timestep, recompute the observations.
 			frame_txt += ' (' + str(frame_num) + ')'
+			# If we've reached a new timestep, recompute the observations.
 			t = frames[frame_num]
-			if t >= 0:
+			if t >= 0 and t != last_t:
+				last_t = t
 				peds = timesteps[t]
 				paths = []
 				predictions = []
@@ -88,7 +104,7 @@ def main():
 					paths.append(path[:,1:4])
 					# Predict possible paths for the agent.
 					t_future = fullpath[path_end:,0]
-					gp = GaussianProcess(path, t_future)
+					gp = ParametricGaussianProcess(path, t_future, xkernel, ykernel)
 					samples = gp.sample(util.NUM_SAMPLES)
 					predictions.append(samples)
 				weights = util.interaction(predictions)
@@ -110,10 +126,15 @@ def main():
 		
 		# Draw predictions for a single agent.
 		if predictions:
-			for i in range(util.NUM_SAMPLES):
-				path = predictions[agent_num%len(predictions)][:,i,:]
+			if DRAW_FINAL_PATH:
+				path = np.mean(predictions[agent_num%len(predictions)], 1)
 				path = np.column_stack((path, np.ones(path.shape[0])))
 				draw_path(frame, path, Hinv, (0,192,192))
+			else:
+				for i in range(util.NUM_SAMPLES):
+					path = predictions[agent_num%len(predictions)][:,i,:]
+					path = np.column_stack((path, np.ones(path.shape[0])))
+					draw_path(frame, path, Hinv, (0,192,192))
 		
 		cv2.imshow('frame', frame)
 		key = cv2.waitKey(0) & 0xFF

@@ -6,7 +6,7 @@ Various utility functions.
 from __future__ import division
 import numpy as np
 
-NUM_SAMPLES = 10	# number of particles
+NUM_SAMPLES = 1000	# number of particles
 OBS_NOISE = 0.00005	# noise variance
 ALPHA = 0.8			# repelling force
 H = 24				# safety distance
