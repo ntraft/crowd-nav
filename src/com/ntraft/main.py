@@ -70,11 +70,7 @@ def main():
 # 	cap.set(POS_MSEC, seekpos)
 	cap.set(POS_FRAMES, 11300)
 	pl.ion()
-	pl.subplot(1,2,1)
-	pl.title('Path Length')
-	pl.subplot(1,2,2)
-	pl.title('Minimum Safety')
-	pl.draw()
+	update_plot([], [])
 	
 	paths = []
 	agent_num = 0
@@ -105,11 +101,7 @@ def main():
 				last_t = t
 				paths, true_paths, predictions, MAP = make_predictions(t, timesteps, agents)
 				ped_scores, IGP_scores = calc_scores(true_paths, MAP)
-				pl.subplot(1,2,1)
-				pl.scatter(IGP_scores[:,0], ped_scores[:,0])
-				pl.subplot(1,2,2)
-				pl.scatter(IGP_scores[:,1], ped_scores[:,1])
-				pl.draw()
+				update_plot(ped_scores, IGP_scores)
 # 				for i in range(ped_scores.shape[0]):
 # 					print 'Agent', i, ': Pedestrian:', ped_scores[i], 'IGP:', IGP_scores[i]
 
@@ -208,6 +200,26 @@ def calc_scores(true_paths, MAP):
 	robot_scores = np.array([calc_score(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(MAP)])
 	ped_scores = np.array([calc_score(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(true_paths)])
 	return ped_scores, robot_scores
+
+def update_plot(ped_scores, IGP_scores):
+	pl.clf()
+	if len(ped_scores) > 0:
+		pl.subplot(1,2,1)
+		pl.title('Path Length')
+		pl.xlabel('IGP'); pl.ylabel('Pedestrian')
+		pl.scatter(IGP_scores[:,0], ped_scores[:,0])
+		plot_diag()
+		pl.subplot(1,2,2)
+		pl.title('Minimum Safety')
+		pl.xlabel('IGP'); pl.ylabel('Pedestrian')
+		pl.scatter(IGP_scores[:,1], ped_scores[:,1])
+		plot_diag()
+		pl.draw()
+
+def plot_diag():
+	pl.xlim(pl.xlim())
+	pl.ylim(pl.ylim())
+	pl.plot(pl.xlim(), pl.ylim(), 'k')
 
 def draw_path(frame, path, Hinv, color):
 	prev = None
