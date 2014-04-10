@@ -49,26 +49,31 @@ def make_predictions(t, timesteps, agents):
 	true_paths = []
 	predictions = []
 	for ped in peds:
-		# Get the full and past paths of the agent.
-		fullpath = agents[ped]
-		path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==t)
-		points = list(range(0,path_end+1))
-		if path_end < fullpath.shape[0]:
-			points += [-1] # Add the destination point.
-		past_plus_dest = fullpath[np.ix_(points)]
+		# Get the past and future paths of the agent.
+		past_plus_dest, future = get_path_at_time(t, agents[ped])
 		past_paths.append(past_plus_dest[:,1:4])
-		true_paths.append(fullpath[path_end:,1:4])
+		true_paths.append(future[:,1:4])
 		
 		# Predict possible paths for the agent.
-		t_future = fullpath[path_end:,0]
+		t_future = future[:,0]
 		gp = ParametricGaussianProcess(past_plus_dest, t_future, xkernel, ykernel)
 		samples = gp.sample(NUM_SAMPLES)
 		predictions.append(samples)
 	
+	# Perform importance sampling and get the maximum a-posteriori path.
 	weights = interaction(predictions)
 	predictions = resample(predictions, weights)
 	MAP = [get_final_path(p) for p in predictions]
 	return (past_paths, true_paths, predictions, MAP)
+
+def get_path_at_time(t, fullpath):
+	path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==t)
+	points = list(range(0,path_end+1))
+	if path_end < fullpath.shape[0]:
+		points += [-1] # Add the destination point.
+	past_plus_dest = fullpath[np.ix_(points)]
+	future = fullpath[path_end:]
+	return past_plus_dest, future
 
 def dist(loc1, loc2):
 	return np.linalg.norm(loc2 - loc1)
