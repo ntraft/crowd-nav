@@ -87,29 +87,30 @@ def run_experiment(cap, disp, timeframes, timesteps, agents):
 	print 'Running experiment...'
 	util.reset_timer()
 	agents_to_test = range(319, 331)
-	IGP_scores = []
-	ped_scores = []
+	IGP_scores = np.zeros((len(agents_to_test), 2))
+	ped_scores = np.zeros((len(agents_to_test), 2))
 	display.update_plot(ped_scores, IGP_scores)
-	for agent in agents_to_test:
+	for i, agent in enumerate(agents_to_test):
 		ped_path = agents[agent]
 		path_length = ped_path.shape[0]
 		final_path = np.zeros((path_length, 3))
+		final_path[0] = ped_path[0,1:4]
 		# Run IGP through the whole path sequence.
-		for i in range(0, path_length):
-			frame_num = timeframes[int(ped_path[i,0])]
+		for t in range(0, path_length-1):
+			frame_num = timeframes[int(ped_path[t,0])]
 			print 'doing frame', frame_num
 			disp.set_frame(frame_num)
-			final_path[i] = disp.do_frame(agent, False)
+			final_path[t+1] = disp.do_frame(agent, False)
 			if cv2.waitKey(1) != -1:
 				print 'Canceled!'
 				return
 		# Compute the final score for both IGP and pedestrian ground truth.
 		print 'Agent', agent, 'done.'
-		start_time = ped_path[0,0]
+		start_time = int(ped_path[0,0])
 		other_peds = [agents[a] for a in timesteps[start_time] if a != agent]
-		other_paths = [util.get_path_at_time(start_time, fullpath)[1] for fullpath in other_peds]
-		IGP_scores.append(util.calc_score(final_path, other_paths))
-		ped_scores.append(util.calc_score(ped_path, other_paths))
+		other_paths = [util.get_path_at_time(start_time, fullpath)[1][:,1:4] for fullpath in other_peds]
+		IGP_scores[i] = util.calc_score(final_path, other_paths)
+		ped_scores[i] = util.calc_score(ped_path[:,1:4], other_paths)
 		display.update_plot(ped_scores, IGP_scores)
 	results = np.column_stack((agents_to_test, ped_scores, IGP_scores))
 	np.savetxt('experiment.txt', results)

@@ -72,7 +72,8 @@ class Display:
 					self.paths, self.true_paths, self.predictions, self.MAP = (
 						util.make_predictions(t, self.timesteps, self.agents)
 					)
-					t_plus_one = self.MAP[adex][1]
+					if self.MAP[adex].shape[0] > 1:
+						t_plus_one = self.MAP[adex][1]
 					if with_scores:
 						ped_scores, IGP_scores = util.calc_scores(self.true_paths, self.MAP)
 						update_plot(ped_scores, IGP_scores)
