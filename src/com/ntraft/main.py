@@ -16,10 +16,7 @@ if sys.platform.startswith('darwin'):
 import matplotlib.pyplot as pl
 
 import com.ntraft.ewap as ewap
-from com.ntraft.gp import ParametricGaussianProcess
-import com.ntraft.covariance as cov
 import com.ntraft.util as util
-from numpy.core.numeric import inf
 
 POS_MSEC = cv2.cv.CV_CAP_PROP_POS_MSEC
 POS_FRAMES = cv2.cv.CV_CAP_PROP_POS_FRAMES
@@ -30,17 +27,6 @@ RIGHT = 3
 ESC = 27
 
 DRAW_FINAL_PATH = True
-
-xkernel = cov.summed_kernel(
-	cov.matern_kernel(33.542, 47517),
-	cov.linear_kernel(315.46),
-	cov.noise_kernel(0.53043)
-)
-ykernel = cov.summed_kernel(
-	cov.matern_kernel(9.8147, 155.36),
-	cov.linear_kernel(17299),
-	cov.noise_kernel(0.61790)
-)
 
 def main():
 	# Parse command-line arguments.
@@ -99,8 +85,8 @@ def main():
 			t = frames[frame_num]
 			if t >= 0 and t != last_t:
 				last_t = t
-				paths, true_paths, predictions, MAP = make_predictions(t, timesteps, agents)
-				ped_scores, IGP_scores = calc_scores(true_paths, MAP)
+				paths, true_paths, predictions, MAP = util.make_predictions(t, timesteps, agents)
+				ped_scores, IGP_scores = util.calc_scores(true_paths, MAP)
 				update_plot(ped_scores, IGP_scores)
 # 				for i in range(ped_scores.shape[0]):
 # 					print 'Agent', i, ': Pedestrian:', ped_scores[i], 'IGP:', IGP_scores[i]
@@ -149,57 +135,6 @@ def main():
 	
 	cap.release()
 	cv2.destroyAllWindows()
-
-def make_predictions(t, timesteps, agents):
-	peds = timesteps[t]
-	past_paths = []
-	true_paths = []
-	predictions = []
-	for ped in peds:
-		# Get the full and past paths of the agent.
-		fullpath = agents[ped]
-		path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==t)
-		points = list(range(0,path_end+1))
-		if path_end < fullpath.shape[0]:
-			points += [-1] # Add the destination point.
-		past_plus_dest = fullpath[np.ix_(points)]
-		past_paths.append(past_plus_dest[:,1:4])
-		true_paths.append(fullpath[path_end:,1:4])
-		
-		# Predict possible paths for the agent.
-		t_future = fullpath[path_end:,0]
-		gp = ParametricGaussianProcess(past_plus_dest, t_future, xkernel, ykernel)
-		samples = gp.sample(util.NUM_SAMPLES)
-		predictions.append(samples)
-	
-	weights = util.interaction(predictions)
-	predictions = util.resample(predictions, weights)
-	MAP = [get_final_path(p) for p in predictions]
-	return (past_paths, true_paths, predictions, MAP)
-
-def get_final_path(samples):
-	return np.column_stack((np.mean(samples, 1), np.ones(samples.shape[0])))
-
-def calc_score(path, other_paths):
-	length = 0
-	safety = inf
-	prev_loc = None
-	for t in range(len(path)):
-		loc = path[t]
-		if prev_loc is not None:
-			length += util.dist(prev_loc, loc)
-		prev_loc = loc
-		for o in other_paths:
-			if t < len(o):
-				dist = util.dist(o[t], loc)
-				if dist < safety:
-					safety = dist
-	return (length, safety)
-
-def calc_scores(true_paths, MAP):
-	robot_scores = np.array([calc_score(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(MAP)])
-	ped_scores = np.array([calc_score(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(true_paths)])
-	return ped_scores, robot_scores
 
 def update_plot(ped_scores, IGP_scores):
 	pl.clf()
