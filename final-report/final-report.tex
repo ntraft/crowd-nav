@@ -1,4 +1,4 @@
-\documentclass[a4paper,11pt,headings=small]{article}
+\documentclass[a4paper,11pt,headings=small,twocolumn]{article}
 
 \usepackage[T1]{fontenc}
 \usepackage[pdftex]{graphicx}
@@ -65,6 +65,7 @@ Future:
 	* Pete gave me an example script. I'd like to try learning hyperparameters for the world coordinate frame instead of doing everything in pixels.
 * Tweaking of interaction potential parameters.
 * Clever methods of assigning destinations to pedestrians.
+* The algorithm presented here took about 2 seconds to plan a single path, with 100 particles. The original paper cites times of 0.1 seconds for the same number of particles, so there is much room for improvement here. The original paper was written in Matlab but I'm not sure the language of implementation is the bottleneck. More likely, the GPML Matlab toolbox's implementation of Gaussian processes is much more efficient than my own (some parts of the toolbox are written in C).
 * Explore shared autonomy, or local vs. global path planning?
 * Implement completely on-robot?
 
@@ -72,8 +73,8 @@ Future:
 
 \begin{document}
 
-%\twocolumn[
-%  \begin{@twocolumnfalse}
+\twocolumn[
+  \begin{@twocolumnfalse}
   \vspace{-1cm}
 	\begin{flushright}
 	April 10, 2014\\
@@ -81,8 +82,8 @@ Future:
 	\vspace{0.6cm}
 	\LARGE{\textbf{Robot Navigation in Dense Human Crowds}\\[0.2cm] Final Report}\\\\ \\
 	\large{Neil Traft\\[0.1cm] University of British Columbia}		 	 	\vspace{0.6cm}
-%\end{@twocolumnfalse}
-%]
+\end{@twocolumnfalse}
+]
 
 
 \pagestyle{fancy}
@@ -121,8 +122,11 @@ At each timestep, each agent's new position is represented as a random variable 
 
 First, goal information is given as a final ``observation'' at time $T$, resulting in the full set of observations $\z_{1:t,T}$. The robot's goal, $y_T^{(R)}$, is known and can be added with good confidence. The goals of other agents can be omitted or can be added with a high variance, to encode how uncertain we are about the goal.
 
-The second addition IGP makes to standard Gaussian processes is the inclusion of an ``interaction potential:''
-$$ \psi(\fr,\f) = \prod_{i=1}^n \prod_{j=i+1}^n \prod_{\tau=t}^T \left( 1 - \alpha \exp\big(-\frac{1}{2h^2}|\fati_{\tau} - \fatj_{\tau}|\big) \right)$$
+The second addition IGP makes to standard Gaussian processes is the inclusion of an ``interaction potential'',
+\begin{align*}
+\psi(\fr,\f) &= \\
+\prod_{i=1}^n \prod_{j=i+1}^n \prod_{\tau=t}^T & \left( 1 - \alpha \exp\big(-\frac{1}{2h^2}|\fati_{\tau} - \fatj_{\tau}|\big) \right)
+\end{align*}
 
 In essence, this potential grows very small whenever two agents $i$ and $j$ become very close at any time $\tau$. This has the result that any set of paths where agents become too close is treated as very unlikely. The parameter $h$ controls the desired ``safety distance'' and $\alpha \in [0, 1]$ controls the ``repelling force''. Thus, the final posterior is given as:
 $$ p_{IGP}(\fr,\f | \ztot) = \frac{1}{Z} \; \psi(\fr,\f) \prod_{i=1}^n p(\fati | \ztot) $$
@@ -132,12 +136,12 @@ $$ p_{IGP}(\fr,\f | \ztot) = \frac{1}{Z} \; \psi(\fr,\f) \prod_{i=1}^n p(\fati |
 
 The above is a nonlinear, multimodal distribution, so it can't be sampled directly. Instead, we sample from Gaussian priors $p(\fati|\ztot)$ and resample weighted by our desired distribution (a particle filter). This is described in the next section.
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=.75\textwidth]{uncertainty-explosion.png}
-\caption{Diagrams taken from \cite{Trautman2010} describing the uncertainty explosion which leads to the Freezing Robot Problem. \textbf{Left:} Depicts the uncertainty explosion in standard motion models, where each agent's trajectory is \emph{independent} from the others. \textbf{Middle:} A demonstration of why even \emph{perfect} prediction, devoid of uncertainty, can still lead to the FRP. In crowded environments, \emph{all} paths can have a high cost function, leading to extreme evasive maneuvers or freezing. \textbf{Right:} The ideal model, based on the insight that intelligent agents engage in \emph{cooperative} collision avoidance.}
-\label{uncertainty}
-\end{figure}
+\begin{figure*}[h]
+	\centering
+	\includegraphics[width=.75\textwidth]{uncertainty-explosion.png}
+	\caption{Diagrams taken from \cite{Trautman2010} describing the uncertainty explosion which leads to the Freezing Robot Problem. \textbf{Left:} Depicts the uncertainty explosion in standard motion models, where each agent's trajectory is \emph{independent} from the others. \textbf{Middle:} A demonstration of why even \emph{perfect} prediction, devoid of uncertainty, can still lead to the FRP. In crowded environments, \emph{all} paths can have a high cost function, leading to extreme evasive maneuvers or freezing. \textbf{Right:} The ideal model, based on the insight that intelligent agents engage in \emph{cooperative} collision avoidance.}
+	\label{uncertainty}
+\end{figure*}
 
 \subsubsection*{Importance Sampling}
 \quad Now that we have a model, we wish to sample from it and take the mean as the desired path. Since we can't sample from it directly, we instead use the \emph{importance sampling} technique which is widely used in particle filters. Each sample is weighted by the ratio of the IGP to the basic GP (i.e. the Gaussian distribution, without the interaction potential):
@@ -175,27 +179,72 @@ $$ \begin{pmatrix}r\\c\\1\end{pmatrix} = \begin{pmatrix}\fourIdx{m}{}{}{}x/z\\\f
 
 \subsection*{Technical Hurdles}
 
-\section*{Experimental Results}
-
-\section*{Next Steps}
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}[b]{0.8\textwidth}
+	\centering
+	\includegraphics[width=\textwidth]{SE+noise-prior.png}
+	\caption{A summed kernel composed of squared exponential and noise kernels.}
+	\label{a}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.8\textwidth}
+	\centering
+	\includegraphics[width=\textwidth]{matern+lin+noise-prior.png}
+	\caption{A summed kernel composed of Matérn, linear regression, and noise kernels.}
+	\label{b}
+	\end{subfigure}
+	\caption{The importance of choosing a proper covariance function. (\ref{a}) This is much too curvy and loopy to represent a human path. Humans generally have destinations; they don't wander aimlessly. (\ref{b}) We consider this to be a much better model of human movement. Human paths are mostly straight, but with occasional curviness.}
+	\label{cov}
+\end{figure}
 
 \begin{figure}[h]
-\centering
-\begin{subfigure}[b]{0.8\textwidth}
-\centering
-\includegraphics[width=\textwidth]{dataset-bug.png}
-\caption{A sample frame from my current visualization.}
-\label{a}
-\end{subfigure}
-\begin{subfigure}[b]{0.8\textwidth}
-\centering
-\includegraphics[width=\textwidth]{dataset-example.png}
-\caption{A sample frame from the ETH paper.\cite{Pellegrini2009}}
-\label{b}
-\end{subfigure}
-\caption{A sample frame from my (buggy) implementation (\ref{a}) compared with a correct implementation (\ref{b}). In the top image, blue dots mark pedestrians, white lines mark static obstacles, and green dots mark possible destinations. If examined closely, one can see the pedestrian markings in my video are correct in relation to each other, but appear scaled and translated within the image plane. The destinations appear to have the same issue (only one destination is visible but there are about 4 total).}
-\label{bug}
+	\centering
+	\begin{subfigure}[b]{0.8\textwidth}
+	\centering
+	\includegraphics[width=\textwidth]{bad-cov-bad-hp.png}
+	\caption{Poor choice of covariance function (squared exponential) and poorly tuned hyperparameters.}
+	\label{a}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.8\textwidth}
+	\centering
+	\includegraphics[width=\textwidth]{bad-cov-good-hp.png}
+	\caption{Improved hyperparameters are still not enough to overcome a fundamentally incorrect covariance function.}
+	\label{b}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.8\textwidth}
+	\centering
+	\includegraphics[width=\textwidth]{good-cov-bad-hp.png}
+	\caption{Good choice of covariance function (Matérn + linear + noise) brings us much closer to the mark, but badly tuned hyperparameters still makes things difficult.}
+	\label{c}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.8\textwidth}
+	\centering
+	\includegraphics[width=\textwidth]{good-cov-good-hp.png}
+	\caption{Good covariance function combined with good hyperparameters.}
+	\label{d}
+	\end{subfigure}
+	\caption{The importance of choosing proper hyperparameters. Hyperparameters must be learned to properly match what we expect from human and robot movement patterns. Hyperparameters must be further tuned for a particular scene, since they are closely related to the scale of our coordinate frame.}
+	\label{hp}
 \end{figure}
+
+\section*{Experimental Results}
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\textwidth]{experiment.png}
+	\caption{The results of the algorithm performed on 12 pedestrians from a particularly crowded segment of the video. Observe that IGP almost always finds an equal length or shorter path than the pedestrian. However, the pedestrian usually maintains a larger distance from other agents, and IGP may be slightly unsafe based on these results.}
+	\label{experiment}
+\end{figure}
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\textwidth]{sample-results.png}
+	\caption{The results reported in the original paper, compiled from 10 trials. Here, we see that IGP outperforms human pedestrians in both path length and path safety. We aren't told which 10 pedestrians are evaluated in the original paper, so these results are somewhat anecdotal and will not necessarily align with our own.}
+	\label{sample}
+\end{figure}
+
+
+\section*{Next Steps}
 
 
 \bibliography{references}
