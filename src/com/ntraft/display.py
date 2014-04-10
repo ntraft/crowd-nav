@@ -40,7 +40,7 @@ class Display:
 		frame_num = int(self.cap.get(POS_FRAMES))
 		self.set_frame(frame_num-2)
 
-	def do_frame(self, with_scores=True):
+	def do_frame(self, agent=-1, with_scores=True):
 		if not self.cap.isOpened():
 			raise Exception('Video stream closed.')
 		
@@ -48,17 +48,11 @@ class Display:
 		frame_num = int(self.cap.get(POS_FRAMES))
 		now = int(self.cap.get(POS_MSEC) / 1000)
 		_, frame = self.cap.read()
-		
-		# Draw the obstacles.
-		frame = np.maximum(frame, cv2.cvtColor(self.obs_map, cv2.COLOR_GRAY2BGR))
-		
-		# Draw destinations.
-		for d in self.destinations:
-			d = np.append(d, 1)
-			cv2.circle(frame, util.to_pixels(self.Hinv, d), 5, (0,255,0), -1)
 	
 		frame_txt = "{:0>2}:{:0>2}".format(now//60, now%60)
-	
+		if self.paths:
+			adex = self.agent_num % len(self.paths)
+		
 		# Check for end of annotations.
 		if frame_num >= len(self.frames):
 			frame_txt += ' (eof)'
@@ -67,17 +61,29 @@ class Display:
 			# If we've reached a new timestep, recompute the observations.
 			t = self.frames[frame_num]
 			if t >= 0:
-				displayed_agent = self.timesteps[t][self.agent_num%len(self.timesteps[t])]
+				if agent > -1:
+					adex = next(i for i,v in enumerate(self.timesteps[t]) if v==agent)
+				else:
+					adex = self.agent_num % len(self.timesteps[t])
+				displayed_agent = self.timesteps[t][adex]
 				self.agent_txt = 'Agent: {}'.format(displayed_agent)
 				if t >= 0 and t != self.last_t:
 					self.last_t = t
 					self.paths, self.true_paths, self.predictions, self.MAP = (
 						util.make_predictions(t, self.timesteps, self.agents)
 					)
-					t_plus_one = self.MAP[1]
+					t_plus_one = self.MAP[adex][1]
 					if with_scores:
 						ped_scores, IGP_scores = util.calc_scores(self.true_paths, self.MAP)
 						update_plot(ped_scores, IGP_scores)
+		
+		# Draw the obstacles.
+		frame = np.maximum(frame, cv2.cvtColor(self.obs_map, cv2.COLOR_GRAY2BGR))
+		
+		# Draw destinations.
+		for d in self.destinations:
+			d = np.append(d, 1)
+			cv2.circle(frame, util.to_pixels(self.Hinv, d), 5, (0,255,0), -1)
 	
 		# Inform of the frame number.
 		pt = (3, frame.shape[0]-3)
@@ -93,16 +99,16 @@ class Display:
 				draw_path(frame, path, (255,0,0))
 			
 			# The ground truth for a single agent.
-			draw_path(frame, self.true_paths[self.agent_num%len(self.true_paths)], (192,0,192))
+			draw_path(frame, self.true_paths[adex], (192,0,192))
 			
 			# The predictions for a single agent.
 			if self.draw_samples:
 				for i in range(util.NUM_SAMPLES):
-					path = self.predictions[self.agent_num%len(self.predictions)][:,i,:]
+					path = self.predictions[adex][:,i,:]
 					path = np.column_stack((path, np.ones(path.shape[0])))
 					draw_path(frame, path, (0,192,192))
 			else: # just the planned path
-				path = self.MAP[self.agent_num%len(self.MAP)]
+				path = self.MAP[adex]
 				draw_path(frame, path, (0,192,192))
 		
 		cv2.imshow('frame', frame)

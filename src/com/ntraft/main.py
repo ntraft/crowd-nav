@@ -92,14 +92,16 @@ def run_experiment(cap, disp, timeframes, timesteps, agents):
 	display.update_plot(ped_scores, IGP_scores)
 	for agent in agents_to_test:
 		ped_path = agents[agent]
-		path_length = len(ped_path)
+		path_length = ped_path.shape[0]
 		final_path = np.zeros((path_length, 3))
 		# Run IGP through the whole path sequence.
-		for i in range(1, path_length):
-			frame_num = timeframes[ped_path[i,0]]
+		for i in range(0, path_length):
+			frame_num = timeframes[int(ped_path[i,0])]
+			print 'doing frame', frame_num
 			disp.set_frame(frame_num)
-			final_path[i] = disp.do_frame(False)
-			if (cv2.waitKey(1) & 0xFF) != -1:
+			final_path[i] = disp.do_frame(agent, False)
+			if cv2.waitKey(1) != -1:
+				print 'Canceled!'
 				return
 		# Compute the final score for both IGP and pedestrian ground truth.
 		print 'Agent', agent, 'done.'
