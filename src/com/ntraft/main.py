@@ -217,16 +217,13 @@ def update_plot(ped_scores, IGP_scores):
 		pl.draw()
 
 def plot_diag():
-	pl.xlim(pl.xlim())
-	pl.ylim(pl.ylim())
-	pl.plot(pl.xlim(), pl.ylim(), 'k')
+	xmin, xmax = pl.xlim()
+	ymin, ymax = pl.ylim()
+	lim = (min(0, min(xmin, ymin)), max(xmax, ymax))
+	pl.plot((0, 1000), (0, 1000), 'k')
+	pl.xlim(lim); pl.ylim(lim)
 
 def draw_path(frame, path, Hinv, color):
-	# Transform the path to pixels.
-# 	path = np.dot(Hinv, path.T).T
-# 	px = np.column_stack((path[:,1], path[:,0])) / path[:,2].reshape(-1,1)
-# 	px = px.astype(int)
-	# Now draw it.
 	prev = None
 	for loc in ((int(y), int(x)) for x,y,z in path):
 		cv2.circle(frame, loc, 3, color, -1)
