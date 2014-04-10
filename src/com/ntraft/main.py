@@ -75,6 +75,7 @@ def main():
 	pl.title('Path Length')
 	pl.subplot(1,2,2)
 	pl.title('Minimum Safety')
+	pl.draw()
 	
 	paths = []
 	agent_num = 0
@@ -109,9 +110,9 @@ def main():
 				pl.scatter(IGP_scores[:,0], ped_scores[:,0])
 				pl.subplot(1,2,2)
 				pl.scatter(IGP_scores[:,1], ped_scores[:,1])
-				pl.show()
-				for i in range(ped_scores.shape[0]):
-					print 'Agent', i, ': Pedestrian:', ped_scores[i], 'IGP:', IGP_scores[i]
+				pl.draw()
+# 				for i in range(ped_scores.shape[0]):
+# 					print 'Agent', i, ': Pedestrian:', ped_scores[i], 'IGP:', IGP_scores[i]
 
 		# Inform of the frame number.
 		font = cv2.FONT_HERSHEY_SIMPLEX
