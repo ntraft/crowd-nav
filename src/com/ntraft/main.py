@@ -222,9 +222,13 @@ def plot_diag():
 	pl.plot(pl.xlim(), pl.ylim(), 'k')
 
 def draw_path(frame, path, Hinv, color):
+	# Transform the path to pixels.
+	path = np.dot(Hinv, path.T).T
+	px = np.column_stack((path[:,1], path[:,0])) / path[:,2].reshape(-1,1)
+	px = px.astype(int)
+	# Now draw it.
 	prev = None
-	for loc in path:
-		loc = util.to_pixels(Hinv, loc)
+	for loc in (tuple(x) for x in px):
 		cv2.circle(frame, loc, 3, color, -1)
 		if prev:
 			cv2.line(frame, prev, loc, color, 1)
