@@ -61,9 +61,11 @@ def main():
 	display.update_plot([], [])
 	
 	while cap.isOpened():
+		
 		disp.do_frame()
+		
 		key = cv2.waitKey(0) & 0xFF
-		if key == ord('p'):
+		if key == ord('r'):
 			run_experiment(cap, disp, timeframes, timesteps, agents)
 		elif key == ord('q') or key == ESC:
 			break
@@ -81,6 +83,7 @@ def main():
 	pl.close('all')
 
 def run_experiment(cap, disp, timeframes, timesteps, agents):
+	# We're going to compare ourselves to the agents with the following IDs.
 	agents_to_test = range(319, 331)
 	IGP_scores = []
 	ped_scores = []
@@ -103,6 +106,8 @@ def run_experiment(cap, disp, timeframes, timesteps, agents):
 		IGP_scores.append(util.calc_score(final_path, other_paths))
 		ped_scores.append(util.calc_score(ped_path, other_paths))
 		display.update_plot(ped_scores, IGP_scores)
+	results = np.column_stack((agents_to_test, ped_scores, IGP_scores))
+	np.savetxt('experiment.txt', results)
 
 def parse_args():
 	parser = argparse.ArgumentParser()
