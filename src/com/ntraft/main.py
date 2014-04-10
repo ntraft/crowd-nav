@@ -51,7 +51,7 @@ def main():
 	# Play the video
 	seqname = os.path.basename(args.datadir)
 	cap = cv2.VideoCapture(os.path.join(args.datadir, seqname+".avi"))
-	disp = display.Display(cap, obs_map, frames, timesteps, agents, destinations)
+	disp = display.Display(cap, Hinv, obs_map, frames, timesteps, agents, destinations)
 	disp.set_frame(11300)
 # 	seekpos = 7.5 * 60 * 1000 # About 7 mins 30 secs
 # 	endpos = 8.7 * 60 * 1000 # About 8 mins 40 secs

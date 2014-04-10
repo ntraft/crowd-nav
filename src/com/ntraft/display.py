@@ -28,7 +28,6 @@ class Display:
 		self.agent_txt = ''
 		self.last_t = -1
 		self.draw_samples = False
-		self.frame_num = 0
 	
 	def set_frame(self, frame):
 		self.cap.set(POS_FRAMES, frame)
@@ -42,7 +41,7 @@ class Display:
 		self.set_frame(frame_num-2)
 
 	def do_frame(self, with_scores=True):
-		if not self.cap.isOpen():
+		if not self.cap.isOpened():
 			raise Exception('Video stream closed.')
 		
 		t_plus_one = None
@@ -63,46 +62,47 @@ class Display:
 		# Check for end of annotations.
 		if frame_num >= len(self.frames):
 			frame_txt += ' (eof)'
-			agent_txt = ''
 		else:
 			frame_txt += ' (' + str(frame_num) + ')'
 			# If we've reached a new timestep, recompute the observations.
 			t = self.frames[frame_num]
 			if t >= 0:
 				displayed_agent = self.timesteps[t][self.agent_num%len(self.timesteps[t])]
-				agent_txt = 'Agent: {}'.format(displayed_agent)
+				self.agent_txt = 'Agent: {}'.format(displayed_agent)
 				if t >= 0 and t != self.last_t:
 					self.last_t = t
-					paths, true_paths, predictions, MAP = util.make_predictions(t, self.timesteps, self.agents)
-					t_plus_one = MAP[1]
+					self.paths, self.true_paths, self.predictions, self.MAP = (
+						util.make_predictions(t, self.timesteps, self.agents)
+					)
+					t_plus_one = self.MAP[1]
 					if with_scores:
-						ped_scores, IGP_scores = util.calc_scores(true_paths, MAP)
+						ped_scores, IGP_scores = util.calc_scores(self.true_paths, self.MAP)
 						update_plot(ped_scores, IGP_scores)
 	
 		# Inform of the frame number.
 		pt = (3, frame.shape[0]-3)
 		ll, ur = draw_text(frame, pt, frame_txt)
-		if agent_txt:
+		if self.agent_txt:
 			pt = (ll[0], ur[1])
-			draw_text(frame, pt, agent_txt)
+			draw_text(frame, pt, self.agent_txt)
 		
 		# Draw in the pedestrians, if we have them.
-		if paths:
+		if self.paths:
 			# The paths they've already taken.
-			for path in paths:
+			for path in self.paths:
 				draw_path(frame, path, (255,0,0))
 			
 			# The ground truth for a single agent.
-			draw_path(frame, true_paths[self.agent_num%len(true_paths)], (192,0,192))
+			draw_path(frame, self.true_paths[self.agent_num%len(self.true_paths)], (192,0,192))
 			
 			# The predictions for a single agent.
 			if self.draw_samples:
 				for i in range(util.NUM_SAMPLES):
-					path = predictions[self.agent_num%len(predictions)][:,i,:]
+					path = self.predictions[self.agent_num%len(self.predictions)][:,i,:]
 					path = np.column_stack((path, np.ones(path.shape[0])))
 					draw_path(frame, path, (0,192,192))
 			else: # just the planned path
-				path = MAP[self.agent_num%len(MAP)]
+				path = self.MAP[self.agent_num%len(self.MAP)]
 				draw_path(frame, path, (0,192,192))
 		
 		cv2.imshow('frame', frame)
