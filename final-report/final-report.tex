@@ -74,7 +74,7 @@ Future:
 %  \begin{@twocolumnfalse}
   \vspace{-1cm}
 	\begin{flushright}
-	February 6, 2014\\
+	April 10, 2014\\
 	\end{flushright}
 	\vspace{0.6cm}
 	\LARGE{\textbf{Robot Navigation in Dense Human Crowds}\\[0.2cm] Final Report}\\\\ \\
@@ -107,6 +107,8 @@ Future:
 
 \section*{Overview}
 \quad In their 2010 IROS publication \cite{Trautman2010}, Trautman and Krause develop a path planning algorithm that is safe and yet does not suffer from the ``freezing robot problem'' (FRP). Their method consists of a model of crowd interaction combined with a particle-based inference method to predict where the crowd (and the robot) should be at some time $t+1$ in the future. The idea is that if one can develop a reliable model of intelligent agents in a crowd, and include the robot as just another of those intelligent agents, then the predictions of the model yield the robot's future path.
+
+The goal of this project is to reproduce their results in simulation on the original dataset. Given some annotated video of pedestrians in a crowd, we can choose one of the pedestrians to represent the robot, and compare the path planned by the robot to the actual path taken by the pedestrian.
 
 \subsubsection*{Interacting Gaussian Processes}
 \quad The crowd interaction model is a nonparametric stochastic model based on Gaussian processes, dubbed \emph{Interacting Gaussian Processes} (IGP). In IGP, the actions of all agents, including the robot, are modeled as a joint distribution:
