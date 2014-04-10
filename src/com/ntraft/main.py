@@ -55,9 +55,9 @@ def main():
 	H = np.loadtxt(Hfile)
 	Hinv = np.linalg.inv(H)
 	# Parse obstacle map.
-	obs_map = ewap.create_obstacle_map(H, mapfile)
+	obs_map = ewap.create_obstacle_map(mapfile)
 	# Parse pedestrian annotations.
-	frames, timesteps, agents = ewap.parse_annotations(obsfile)
+	frames, timesteps, agents = ewap.parse_annotations(Hinv, obsfile)
 	# Parse destinations.
 	destinations = np.loadtxt(destfile)
 	
@@ -223,12 +223,12 @@ def plot_diag():
 
 def draw_path(frame, path, Hinv, color):
 	# Transform the path to pixels.
-	path = np.dot(Hinv, path.T).T
-	px = np.column_stack((path[:,1], path[:,0])) / path[:,2].reshape(-1,1)
-	px = px.astype(int)
+# 	path = np.dot(Hinv, path.T).T
+# 	px = np.column_stack((path[:,1], path[:,0])) / path[:,2].reshape(-1,1)
+# 	px = px.astype(int)
 	# Now draw it.
 	prev = None
-	for loc in (tuple(x) for x in px):
+	for loc in ((int(y), int(x)) for x,y,z in path):
 		cv2.circle(frame, loc, 3, color, -1)
 		if prev:
 			cv2.line(frame, prev, loc, color, 1)

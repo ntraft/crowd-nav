@@ -8,12 +8,13 @@ Created on Mar 1, 2014
 '''
 import numpy as np
 from PIL import Image
+import com.ntraft.util as util
 
-def create_obstacle_map(H, map_png):
+def create_obstacle_map(map_png):
 	rawmap = np.array(Image.open(map_png))
-	return rawmap # TODO transform into world coords
+	return rawmap
 
-def parse_annotations(obsmat_txt):
+def parse_annotations(Hinv, obsmat_txt):
 	mat = np.loadtxt(obsmat_txt)
 	num_frames = mat[-1,0] + 1
 	num_times = np.unique(mat[:,0]).size
@@ -30,6 +31,8 @@ def parse_annotations(obsmat_txt):
 			frames[frame] = time
 		ped = int(row[1])
 		timesteps[time].append(ped)
-		loc = [time, row[2], row[4], 1]
+		loc = np.array([row[2], row[4], 1])
+		loc = util.to_image_frame(Hinv, loc)
+		loc = [time, loc[0], loc[1], loc[2]]
 		peds[ped] = np.vstack((peds[ped], loc))
 	return (frames, timesteps, peds)
