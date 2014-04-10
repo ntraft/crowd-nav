@@ -60,6 +60,7 @@ def main():
 	
 	paths = []
 	agent_num = 0
+	agent_txt = ''
 	last_t = -1
 	while cap.isOpened():
 		frame_num = int(cap.get(POS_FRAMES))
@@ -79,27 +80,26 @@ def main():
 		# Check for end of annotations.
 		if frame_num >= len(frames):
 			frame_txt += ' (eof)'
+			agent_txt = ''
 		else:
 			frame_txt += ' (' + str(frame_num) + ')'
 			# If we've reached a new timestep, recompute the observations.
 			t = frames[frame_num]
-			if t >= 0 and t != last_t:
-				last_t = t
-				paths, true_paths, predictions, MAP = util.make_predictions(t, timesteps, agents)
-				ped_scores, IGP_scores = util.calc_scores(true_paths, MAP)
-				update_plot(ped_scores, IGP_scores)
-# 				for i in range(ped_scores.shape[0]):
-# 					print 'Agent', i, ': Pedestrian:', ped_scores[i], 'IGP:', IGP_scores[i]
+			if t >= 0:
+				curr_agent = timesteps[t][agent_num%len(timesteps[t])]
+				agent_txt = 'Agent: {}'.format(curr_agent)
+				if t >= 0 and t != last_t:
+					last_t = t
+					paths, true_paths, predictions, MAP = util.make_predictions(t, timesteps, agents)
+					ped_scores, IGP_scores = util.calc_scores(true_paths, MAP)
+					update_plot(ped_scores, IGP_scores)
 
 		# Inform of the frame number.
-		font = cv2.FONT_HERSHEY_SIMPLEX
-		pt = (5, frame.shape[0]-10)
-		scale = 0.6
-		thickness = 1
-		width, baseline = cv2.getTextSize(frame_txt, font, scale, thickness)
-		baseline += thickness
-		cv2.rectangle(frame, (pt[0], pt[1]+baseline), (pt[0]+width[0], pt[1]-width[1]-2), (0,0,0), -1)
-		cv2.putText(frame, frame_txt, pt, font, scale, (0,255,0), thickness)
+		pt = (3, frame.shape[0]-3)
+		ll, ur = draw_text(frame, pt, frame_txt)
+		if agent_txt:
+			pt = (ll[0], ur[1])
+			draw_text(frame, pt, agent_txt)
 		
 		# Draw in the pedestrians, if we have them.
 		if paths:
@@ -157,6 +157,19 @@ def plot_diag():
 	lim = (min(0, min(xmin, ymin)), max(xmax, ymax))
 	pl.plot((0, 1000), (0, 1000), 'k')
 	pl.xlim(lim); pl.ylim(lim)
+
+def draw_text(frame, pt, frame_txt):
+	font = cv2.FONT_HERSHEY_SIMPLEX
+	scale = 0.6
+	thickness = 1
+	sz, baseline = cv2.getTextSize(frame_txt, font, scale, thickness)
+	baseline += thickness
+	lower_left = (pt[0], pt[1])
+	pt = (pt[0], pt[1]-baseline)
+	upper_right = (pt[0]+sz[0], pt[1]-sz[1]-2)
+	cv2.rectangle(frame, lower_left, upper_right, (0,0,0), -1)
+	cv2.putText(frame, frame_txt, pt, font, scale, (0,255,0), thickness)
+	return lower_left, upper_right
 
 def draw_path(frame, path, Hinv, color):
 	prev = None
