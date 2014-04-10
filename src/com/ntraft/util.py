@@ -6,6 +6,7 @@ Various utility functions.
 from __future__ import division
 import numpy as np
 from numpy.core.numeric import inf
+import time
 
 from com.ntraft.gp import ParametricGaussianProcess
 import com.ntraft.covariance as cov
@@ -27,6 +28,25 @@ ykernel = cov.summed_kernel(
 	cov.noise_kernel(0.61790)
 )
 
+total_time = 0
+total_runs = 0
+def timeit(f):
+	def timed(*args, **kw):
+		global total_time, total_runs
+		ts = time.time()
+		result = f(*args, **kw)
+		te = time.time()
+		total_time += te-ts
+		total_runs += 1
+		return result
+	return timed
+
+def reset_timer():
+	total_time = 0; total_runs = 0
+
+def report_time():
+	print 'IGP on average took {:.2f} seconds with {} particles.'.format(total_time/total_runs, NUM_SAMPLES)
+
 def to_pixels(Hinv, loc):
 	"""
 	Given H^-1 and (x, y, z) in world coordinates, returns (c, r) in image
@@ -43,6 +63,7 @@ def to_image_frame(Hinv, loc):
 	loc = np.dot(Hinv, loc) # to camera frame
 	return loc/loc[2] # to pixels (from millimeters)
 
+@timeit
 def make_predictions(t, timesteps, agents):
 	peds = timesteps[t]
 	past_paths = []
@@ -146,4 +167,3 @@ def calc_scores(true_paths, MAP):
 	robot_scores = np.array([calc_score(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(MAP)])
 	ped_scores = np.array([calc_score(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(true_paths)])
 	return ped_scores, robot_scores
-

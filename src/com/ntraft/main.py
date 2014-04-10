@@ -84,6 +84,8 @@ def main():
 
 def run_experiment(cap, disp, timeframes, timesteps, agents):
 	# We're going to compare ourselves to the agents with the following IDs.
+	print 'Running experiment...'
+	util.reset_timer()
 	agents_to_test = range(319, 331)
 	IGP_scores = []
 	ped_scores = []
@@ -100,6 +102,7 @@ def run_experiment(cap, disp, timeframes, timesteps, agents):
 			if (cv2.waitKey(1) & 0xFF) != -1:
 				return
 		# Compute the final score for both IGP and pedestrian ground truth.
+		print 'Agent', agent, 'done.'
 		start_time = ped_path[0,0]
 		other_peds = [agents[a] for a in timesteps[start_time] if a != agent]
 		other_paths = [util.get_path_at_time(start_time, fullpath)[1] for fullpath in other_peds]
@@ -108,6 +111,8 @@ def run_experiment(cap, disp, timeframes, timesteps, agents):
 		display.update_plot(ped_scores, IGP_scores)
 	results = np.column_stack((agents_to_test, ped_scores, IGP_scores))
 	np.savetxt('experiment.txt', results)
+	print 'EXPERIMENT COMPLETE.'
+	util.report_time()
 
 def parse_args():
 	parser = argparse.ArgumentParser()
