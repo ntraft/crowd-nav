@@ -11,7 +11,6 @@ import cv2
 import numpy as np
 import matplotlib
 # The 'MacOSX' backend appears to have some issues on Mavericks.
-import sys
 if sys.platform.startswith('darwin'):
 	matplotlib.use('TkAgg')
 import matplotlib.pyplot as pl
