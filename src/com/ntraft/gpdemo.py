@@ -11,7 +11,7 @@ import matplotlib.pyplot as pl
 
 # This is the true unknown function we are trying to approximate
 x1 = lambda x: x.flatten() # y = x
-x2 = lambda x: x.flatten()-10 # y = x
+x2 = lambda x: x.flatten() # y = x
 # x2 = lambda x: 2*np.ones_like(x) # constant
 # x2 = lambda x: np.sin(0.9*x).flatten() # sin
 
@@ -23,7 +23,7 @@ s = 0.00000	# noise variance
 # T = np.random.uniform(-5, 0, size=(N,))
 T = np.linspace(-10, 0, N)
 # T = np.linspace(-90, 0, N)
-T[-1] = 19.6 # set a goal point
+# T[-1] = 19.6 # set a goal point
 # T[-1] = 175 # set a goal point
 x = x1(T) + s*np.random.randn(N)
 y = x2(T) + s*np.random.randn(N)
@@ -33,27 +33,26 @@ z = np.column_stack((T, x, y))
 Ttest = np.linspace(0, 20, n)
 # Ttest = np.linspace(0, 180, n)
 
-# axis = [-20, 35, -10, 25]
-axis = [-10, 30, -20, 15]
+axis = [-20, 35, -10, 25]
 # axis = [-200, 400, -90, 200]
 
 # Build our Gaussian process.
-xkernel = cov.sq_exp_kernel(2.5, 1)
-ykernel = cov.sq_exp_kernel(2.5, 1)
+# xkernel = cov.sq_exp_kernel(2.5, 1)
+# ykernel = cov.sq_exp_kernel(2.5, 1)
 # kernel = cov.matern_kernel(2.28388, 2.52288)
 # kernel = cov.linear_kernel(-2.87701)
 # xkernel = cov.summed_kernel(cov.sq_exp_kernel(2.5, 1), cov.noise_kernel(0.01))
 # ykernel = cov.summed_kernel(cov.sq_exp_kernel(2.5, 1), cov.noise_kernel(0.01))
-# xkernel = cov.summed_kernel(
-# 	cov.matern_kernel(33.542, 47517),
-# 	cov.linear_kernel(315.46),
-# 	cov.noise_kernel(0.53043)
-# )
-# ykernel = cov.summed_kernel(
-# 	cov.matern_kernel(9.8147, 155.36),
-# 	cov.linear_kernel(17299),
-# 	cov.noise_kernel(0.61790)
-# )
+xkernel = cov.summed_kernel(
+	cov.matern_kernel(33.542, 47517),
+	cov.linear_kernel(315.46),
+	cov.noise_kernel(0.53043)
+)
+ykernel = cov.summed_kernel(
+	cov.matern_kernel(9.8147, 155.36),
+	cov.linear_kernel(17299),
+	cov.noise_kernel(0.61790)
+)
 xgp = GaussianProcess(T, x, Ttest, xkernel)
 ygp = GaussianProcess(T, y, Ttest, ykernel)
 
