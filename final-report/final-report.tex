@@ -158,8 +158,8 @@ where $\samplej$ is a single sample from the trajectory of agent $j$.
 
 Given this formulation for $p_{IGP}$ and an appropriate weighting $w_i$ for each sample, the ideal paths can now be expressed as the \emph{maximum a-posteriori} (MAP) assignment for the posterior,
 $$ (\fr,\f)^* = \argmax_{\fr,\f}\left( \sum_{i=1}^N w_i(\fr,\f)_i \right) $$
-where $(\fr,\f)_i$ is a set of samples from the Gaussian processes $(\fatj)_i \sim \textrm{GP}(\fatj, m_t^{(j)}, k_t^{(j)})$. The total number of samples is $N$ and we take the robot's next position to be $\fr_{t+1}$. To approximate the optimal robot path $\fr$, we take the mean path over all samples after importance resampling:
-$$ \mathrm{f}^{(R)*}_t = \frac{\sum_{i=1}^N \mathrm{f}^{(R)}_t}{N} $$
+where $(\fr,\f)_i$ is a set of samples from the Gaussian processes $(\fatj)_i \sim \textrm{GP}(\fatj, m_t^{(j)}, k_t^{(j)})$. The total number of samples is $N$ and we take the robot's next position to be $(\fr_{t+1})^*$. To approximate the optimal robot path $(\fr)^*$, we take the mean path over all samples after importance resampling:
+$$ (\mathrm{f}^{(R)}_t)^* = \frac{1}{N} \sum_{i=1}^N (\mathrm{f}^{(R)}_t)_i $$
 
 \section{Implementation}
 \quad The project is implemented in Python, using the OpenCV library\cite{opencv} for visualization and video playback (but not for any of the vision algorithms it provides).
@@ -174,7 +174,8 @@ $$ \z_t = \pos^{(1:n)}_t $$
 where one of the $n$ pedestrians is chosen to represent the robot $R$. The velocities are not used in the present IGP formulation.
 
 The positions and velocities are in meters and were obtained with a homography matrix $H$, which is also provided with the annotations. To transform the positions back to image coordinates, it is necessary to apply the inverse homography transform:
-$$ \fourIdx{m}{}{}{}\post = H_{mw}^{-1} \cdot \fourIdx{w}{}{}{}\post \quad m = \mathrm{image}, w = \mathrm{world} $$
+$$ \fourIdx{m}{}{}{}\post = H_{mw}^{-1} \cdot \fourIdx{w}{}{}{}\post $$
+$$ m = \mathrm{image}, w = \mathrm{world} $$
 The intrinsic camera parameters are not needed; it is presumed that they are included in the camera matrix provided by the dataset. There is also no translation needed; the origin of the world can be taken to be the (transformed) origin of the image without loss of generality. Thus, pixel coordinates can be expressed as
 $$ r = -f_x \frac{x}{z} = \frac{u}{z} \qquad c = -f_y \frac{y}{z} = \frac{v}{z} $$
 where $f_x,\;f_y$ are the intrinsic camera parameters and $x,\;y$ are coordinates in the image frame. So to obtain pixel coordinates from image coordinates it is necessary only to normalize so that $z=1$:
@@ -187,7 +188,7 @@ $$ \begin{pmatrix}r\\c\\1\end{pmatrix} = \begin{pmatrix}\fourIdx{m}{}{}{}x/z\\\f
 In addition to this, there are other parameters to be tuned and implementation choices which are left open-ended by the original author. These choices comprise the hurdles one has to clear to see good results from IGP.
 
 \subsubsection{The Covariance Function}
-\quad The covariance function (also known as a \emph{kernel}) used for the Gaussian processes in IGP is an absolutely crucial consideration. However, the authors of \cite{Trautman2010} not describe their choice of kernel. In their 2013 follow-up work, they mention the class of kernel used, but do not go into sufficient detail to reproduce their implementation. \cite{Trautman2013}
+\quad The covariance function (also known as a \emph{kernel}) used for the Gaussian processes in IGP is an absolutely crucial consideration. However, the authors of \cite{Trautman2010} do not describe their choice of kernel. In their 2013 follow-up work, they mention the class of kernel used, but do not go into sufficient detail to reproduce their implementation. \cite{Trautman2013}
 
 What is needed from our Gaussian process is a prior which is straight most of the time, but with some curviness. This encodes our assumptions about the way humans move. People almost always walk in straight lines, so we need a Gaussian process that gives us that. We also would like some curviness for those times when people don't walk straight, and we also need to encode the noisiness of our observations. \footnote{From correspondence with the author, Peter Trautman.}
 
@@ -195,7 +196,7 @@ From these requirements, we can see that the traditional kernel for Gaussian pro
 $$ k(\x,\x') = \sigma^2 \exp\Big(-\frac{1}{2\ell^2}|\x - \x'|^2\Big) $$
 where $\x$ and $\x'$ denote two vectors of independent variables whose covariance we wish to calculate, and where $\sigma^2$ and $\ell$ are the noise and length hyperparameters, respectively.
 
-First of all, the SE kernel is too variable; too ``curvy''. An example is given in Figure \ref{cov}. The aimlessly meandering paths seen there do not represent a person enroute to a destination. A much bigger problem, moreover, is the fact that SE is \emph{shift invariant}. Informally, this means that it will gravitate toward the mean wherever there is no data. Observe how it hovers about the origin in the example.
+First of all, the SE kernel is too variable; too ``curvy''. An example is given in Figure \ref{cov}. The aimlessly meandering paths seen there do not resemble a person enroute to a destination. Moreover, a much bigger problem is the fact that SE is \emph{stationary} (shift invariant). Informally, this means that it will gravitate toward the mean wherever there is no data. Observe how it hovers about the origin in the example.
 
 In contrast, the linear regression kernel is a \emph{non}-shift-invariant kernel which satisfies our need for a straight path to continue in a straight line in the absence of data. Also known as a dot product covariance function, it is expressed as
 $$ k(\x,\x') = \sigma^2 + \x \cdot \x' $$
@@ -220,7 +221,7 @@ $$ k(r) = \left(1 + \frac{\sqrt{5}r}{\ell} + \frac{5r^2}{3\ell^2} \right) \exp\l
 where $r = |\x-\x'|^2$. This gives us nicely shaped paths, and we finally add in a noise kernel, which is just a constant variance applied to our training data. The final choice of kernel is illustrated in Figure \ref{cov}, and an example of sampling from the posterior can be seen in Figure \ref{hp}.
 
 \subsubsection{Kernel Hyperparameters}
-\quad Perhaps equally crucial to the choice of covariance function is the choice of \emph{parameters} for the covariance function. These include such parameters as the variance $\sigma^2$ and the length-scale $\ell$. The variables are often co-dependent \footnote{Meaning that if you fix one variable, the optimal choice for the other variable depends on the value of the fixed variable} and highly dependent on the data you wish to approximate. Generally, they should be learned from the data.\cite{gpml}
+\quad Perhaps equally crucial to the choice of covariance function is the choice of \emph{parameters} for the covariance function. These include such parameters as the variance $\sigma^2$ and the length-scale $\ell$. The variables are often co-dependent \footnote{Meaning that if you fix one variable, the optimal choice for the other variable depends on the value of the fixed variable.} and highly dependent on the data you wish to approximate. Generally, they should be learned from the data.\cite{gpml}
 
 I was able to obtain the original hyperparameters used for the EWAP dataset from Peter Trautman, so I did not have to learn the hyperparameters myself. Even so, producing good paths was not automatic.
 
@@ -256,16 +257,16 @@ Hyperparameters are directly dependent on the scale of coordinate system. This m
 \end{figure*}
 
 \subsubsection{MAP Approximation}
-\quad As mentioned in the \nameref{isampling} section above, the next waypoint of the robot is given by the MAP assignment of the posterior distribution. However, it is not clear how this is obtained in the original work. The answer is that we take the mean of the resampled paths in order to approximate the MAP assignment. This is roughly equivalent, therefore, of taking the weighted mean of the Gaussian process samples, prior to resampling.
+\quad As mentioned in the \nameref{isampling} section above, the next waypoint of the robot is given by the MAP assignment of the posterior distribution. However, it is not clear how this is obtained in the original work. The answer is that we take the mean of the resampled paths in order to approximate the MAP assignment. This is roughly equivalent to taking the weighted mean of the Gaussian process samples, prior to resampling.
 
-Practically speaking, this is a shortcut. The reason for it is that the path with the largest weight is still unstable unless we take a very large number of samples. \footnote{This sentiment was conveyed by Peter Trautman via personal correspondence.} However, this potentially destroys multimodal distributions, which is why we used a particle filter in the first place. This seems to work well enough in this example, but an idea for improvement is described in \nameref{sec:future}.
+Practically speaking, this is a shortcut. The reason for it is that the path with the largest weight is still unstable unless we take a very large number of samples. \footnote{This sentiment was conveyed by Peter Trautman via personal correspondence.} However, this potentially destroys multimodal distributions, which is why we used a particle filter in the first place. This seems to work well enough in this example, but an idea for improvement is described in \nameref{future}.
 
 
 \section{Experimental Results}
 
 \quad I evaluated IGP on each of twelve pedestrians, in turn, taken from a small segment of video which exhibited high crowd density and interaction. See Figure \ref{screenshot} for a screenshot of the scene.
 
-The dataset and how it is annotated is already outlined above. Once I had the ability to process this data I set up an automated experiment. For each pedestrian, IGP simulated a full execution of, \emph{not} the pedestrian's own path, but the path planned by IGP. The simulated ``robot'' started and ended at the same location as the pedestrian, but at all intermediate timepoints the robot replanned the path as if it were at the location planned at the previous timestep. Timesteps were fixed so that the pedestrian and the robot both took the same amount of time to reach the end goal (so it was assumed that the robot could move as fast as the human).
+The dataset and how it is annotated is already outlined above. Once I had the ability to process this data I set up an automated experiment. For each pedestrian, IGP simulated a full execution of, \emph{not} the pedestrian's own path, but the path planned by IGP. The simulated ``robot'' started and ended at the same location as the pedestrian, but at all intermediate timepoints the robot replanned the path as if it were at the location planned previously. Timesteps were fixed so that the pedestrian and the robot both took the same amount of time to reach the end goal (so it was assumed that the robot could move as fast as the human).
 
 \begin{figure}[H]
 	\begin{subfigure}{\linewidth}
@@ -298,12 +299,12 @@ At the end of each run, the robot's performance is compared to that of the human
 	\label{sample}
 \end{figure}
 
-The experiment was run with the minimum number of particles needed for good results (anecdotally, 100 particles). This took an average of 2.0 seconds to plan a single path on a laptop. The original paper does not specify the number of particles used in their experiment, so this is quite possibly the reason for the difference in performance. There are also a number of shortcomings which may have additionally contributed to the degraded performance. These are outlined in the \ref{future} section below.
+The experiment was run with the minimum number of particles needed for good results (anecdotally, 100 particles). This took an average of 2.0 seconds to plan a single path on a laptop. The original paper does not specify the number of particles used in their experiment, so this is quite possibly the reason for the difference in performance. There are also a number of shortcomings which may have additionally contributed to the degraded performance. These are outlined in the next section.
 
 
-\section{Next Steps} \label{sec:future}
+\section{Next Steps} \label{future}
 
-\quad First and foremost, I believe there are still bugs in my implementation of Gaussian processes that need to be cleaned up. It generally works, but I have not been able to confirm that the covariance functions are completely correct. Peter Trautman has expressed that the paths do not look quite right. It is nice to know that IGP performs well despite not having perfect GP priors. It does seem like it has degraded performance, however, and should be fixed.
+\quad First and foremost, I believe there are still bugs in my implementation of Gaussian processes that need to be cleaned up. It generally works, but I have not been able to confirm that the covariance functions are completely correct. Peter Trautman has expressed that the paths do not look quite right. It is nice to know that IGP performs well despite not having perfect Gaussian process priors. It does seem like it has degraded performance, however, and should be fixed.
 
 It is also possible that the performance has not been fully evaluated, or that the results reported in \cite{Trautman2010} are optimistic. In the near future, I would like to run more experiments to fully evaluate the algorithm's performance over a number of different crowd densities. There was only time to run the single twelve-trial experiment for this project.
 
@@ -311,7 +312,7 @@ Another major avenue I would like to explore is how to learn the hyperparameters
 
 Along the lines of learning hyperparameters, my current implementation uses the same set of parameters for both human and robot agents. But humans and robots do not move in the same way (robots are generally less agile). So it follows that the best algorithm will learn separate parameter sets for human and robot.
 
-There are a number of other free variables in IGP, other than those of the covariance functions. The interaction potential has two in particular that may have a significant impact on the performance of the path planner. The distance into the future to plan a path is also an open avenue of research. Currently Peter Trautman predicts a fixed 30 timesteps into the future, while my algorithm predicts the exact number of timesteps needed to reach the goal (since my implementation runs on annotated video, it can effectively know the future). An interesting avenue for research would be to create a universal IGP algorithm, where all these free variables, hyperparameters included, could be learned online.
+There are a number of other free variables in IGP, other than those of the covariance functions. The interaction potential has two in particular that may have a significant impact on the performance of the path planner. The distance into the future to plan a path is also an open avenue of research. The original IGP predicts a fixed 30 timesteps into the future, while mine predicts the exact number of timesteps needed to reach the goal (since my implementation runs on annotated video, it can cheat by knowing the future). An interesting avenue for research would be to create a universal IGP algorithm, where all these free variables, hyperparameters included, could be learned online.
 
 Another open problem is that of assigning destination waypoints to the other agents in the scene. This step is fairly important for controlling the variance on agents' paths and getting sensible results from IGP. The better we can guess where someone is headed, the better we can predict how they're going to get there, and this could be a good research question to answer.
 
