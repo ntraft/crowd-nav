@@ -94,6 +94,7 @@ Future:
 
 \pagenumbering{arabic}
 \setcounter{page}{1}
+\setcounter{secnumdepth}{0}
 
 %\onehalfspacing
 \renewcommand{\thesection}{\Roman{section}}
@@ -111,12 +112,12 @@ Future:
 \newcommand{\post}{\pos^{(i)}_t}
 \newcommand{\x}{\mathbf{x}}
 
-\section*{Overview}
+\section{Overview}
 \quad In their 2010 IROS publication \cite{Trautman2010}, Trautman and Krause develop a path planning algorithm that is safe and yet does not suffer from the ``freezing robot problem'' (FRP). Their method consists of a model of crowd interaction combined with a particle-based inference method to predict where the crowd (and the robot) should be at some time $t+1$ in the future. The idea is that if one can develop a reliable model of intelligent agents in a crowd, and include the robot as just another of those intelligent agents, then the predictions of the model yield the robot's future path.
 
 The goal of this project is to reproduce their results in simulation on the original dataset. Given some annotated video of pedestrians in a crowd, we can choose one of the pedestrians to represent the robot, and compare the path planned by the robot to the actual path taken by the pedestrian.
 
-\subsubsection*{Interacting Gaussian Processes}
+\subsubsection{Interacting Gaussian Processes}
 \quad The crowd interaction model is a nonparametric stochastic model based on Gaussian processes, dubbed \emph{Interacting Gaussian Processes} (IGP). In IGP, the actions of all agents, including the robot, are modeled as a joint distribution:
 $$p(\fr,\f|\ztot)$$
 where $\fr$ is the robot's trajectory over $T$ timesteps, $\f$ is the set of all human trajectories, and $\ztot$ is the set of all observations up to the current time point. For the purposes of this algorithm, observations of human and robot position are taken to be more or less perfect, since we are only trying to solve the navigation problem, not situational awareness.
@@ -146,7 +147,7 @@ The above is a nonlinear, multimodal distribution, so it can't be sampled direct
 	\label{uncertainty}
 \end{figure*}
 
-\subsubsection*{Importance Sampling}
+\subsubsection{Importance Sampling} \label{isampling}
 \quad Now that we have a model, we wish to sample from it and take the mean as the desired path. Since we can't sample from it directly, we instead use the \emph{importance sampling} technique which is widely used in particle filters. Each sample is weighted by the ratio of the IGP to the basic GP (i.e. the Gaussian distribution, without the interaction potential):
 \begin{align*}
 w_i &= \frac{p_{IGP}}{p_{GP}} = \frac{p_{IGP}((\fr,\f) | \ztot)}{\prod_{j=R}^n p(\samplej | \ztot)} \\
@@ -155,15 +156,15 @@ w_i &= \frac{p_{IGP}}{p_{GP}} = \frac{p_{IGP}((\fr,\f) | \ztot)}{\prod_{j=R}^n p
 \end{align*}
 where $\samplej$ is a single sample from the trajectory of agent $j$.
 
-Given this formulation for $p_{IGP}$ and an appropriate weighting $w_i$ for each sample, the ideal paths can now be expressed as:
-$$ (\fr,\f)^* = \argmax\left( \sum_{i=1}^N w_i(\fr,\f)_i \right) $$
+Given this formulation for $p_{IGP}$ and an appropriate weighting $w_i$ for each sample, the ideal paths can now be expressed as the \emph{maximum a-posteriori} (MAP) assignment for the posterior,
+$$ (\fr,\f)^* = \argmax_{\fr,\f}\left( \sum_{i=1}^N w_i(\fr,\f)_i \right) $$
 where $(\fr,\f)_i$ is a set of samples from the Gaussian processes $(\fatj)_i \sim \textrm{GP}(\fatj, m_t^{(j)}, k_t^{(j)})$. The total number of samples is $N$ and we take the robot's next position to be $\fr_{t+1}$. To approximate the optimal robot path $\fr$, we take the mean path over all samples after importance resampling:
 $$ \mathrm{f}^{(R)*}_t = \frac{\sum_{i=1}^N \mathrm{f}^{(R)}_t}{N} $$
 
-\section*{Implementation}
+\section{Implementation}
 \quad The project is implemented in Python, using the OpenCV library\cite{opencv} for visualization and video playback (but not for any of the vision algorithms it provides).
 
-\subsection*{The Dataset}
+\subsection{The Dataset}
 \quad The dataset to be used is the ETH Walking Pedestrians (EWAP) dataset from \cite{Pellegrini2009}. It can be obtained from \cite{dataset}.
 
 The dataset contains two annotated videos of pedestrian interaction captured from a bird's eye view. The one used depicts pedestrians entering and exiting a building.
@@ -179,13 +180,13 @@ $$ r = -f_x \frac{x}{z} = \frac{u}{z} \qquad c = -f_y \frac{y}{z} = \frac{v}{z} 
 where $f_x,\;f_y$ are the intrinsic camera parameters and $x,\;y$ are coordinates in the image frame. So to obtain pixel coordinates from image coordinates it is necessary only to normalize so that $z=1$:
 $$ \begin{pmatrix}r\\c\\1\end{pmatrix} = \begin{pmatrix}\fourIdx{m}{}{}{}x/z\\\fourIdx{m}{}{}{}y/z\\\fourIdx{m}{}{}{}z/z\end{pmatrix} $$
 
-\subsection*{Technical Hurdles}
+\subsection{Technical Hurdles}
 
 \quad There are some nuances to using a Gaussian process that can stun and bewilder those who are new to them. IGP is very sensitive to these nuances, and an understanding of Gaussian processes is essential to getting it to work.
 
 In addition to this, there are other parameters to be tuned and implementation choices which are left open-ended by the original author. These choices comprise the hurdles one has to clear to see good results from IGP.
 
-\subsubsection*{The Covariance Function}
+\subsubsection{The Covariance Function}
 \quad The covariance function (also known as a \emph{kernel}) used for the Gaussian processes in IGP is an absolutely crucial consideration. However, the authors of \cite{Trautman2010} not describe their choice of kernel. In their 2013 follow-up work, they mention the class of kernel used, but do not go into sufficient detail to reproduce their implementation. \cite{Trautman2013}
 
 What is needed from our Gaussian process is a prior which is straight most of the time, but with some curviness. This encodes our assumptions about the way humans move. People almost always walk in straight lines, so we need a Gaussian process that gives us that. We also would like some curviness for those times when people don't walk straight, and we also need to encode the noisiness of our observations. \footnote{From correspondence with the author, Peter Trautman.}
@@ -216,14 +217,14 @@ $$ k(\x,\x') = \sigma^2 + \x \cdot \x' $$
 
 Having only straight lines generalizes to simple linear regression, however, which is obviously not desirable. We still need to be able to approximate nonlinear paths, so we add in one of the Matérn class of covariance functions defined in \cite{gpml},
 $$ k(r) = \left(1 + \frac{\sqrt{5}r}{\ell} + \frac{5r^2}{3\ell^2} \right) \exp\left(-\frac{\sqrt{5}r}{\ell}\right) $$
-where $r = |\x-\x'|^2$. This gives us nicely shaped paths, and we finally add in a noise kernel, which is just a constant variance applied to our training data. The final choice of kernel is illustrated in Figure \ref{cov}.
+where $r = |\x-\x'|^2$. This gives us nicely shaped paths, and we finally add in a noise kernel, which is just a constant variance applied to our training data. The final choice of kernel is illustrated in Figure \ref{cov}, and an example of sampling from the posterior can be seen in Figure \ref{hp}.
 
-%* Covariance matrix is CRUCIAL. In fact, it's everything.
-%* Author was doing everything in pixels! This screws up my hyperparameters!
-%* How far into future to predict.
-%* How to get MAP (take the mean).
-%* Correspondence is key. In both cases, fixed major issues.
-%* Taking the mean to approximate the MAP: is this valid?
+\subsubsection{Kernel Hyperparameters}
+\quad Perhaps equally crucial to the choice of covariance function is the choice of \emph{parameters} for the covariance function. These include such parameters as the variance $\sigma^2$ and the length-scale $\ell$. The variables are often co-dependent \footnote{Meaning that if you fix one variable, the optimal choice for the other variable depends on the value of the fixed variable} and highly dependent on the data you wish to approximate. Generally, they should be learned from the data.\cite{gpml}
+
+I was able to obtain the original hyperparameters used for the EWAP dataset from Peter Trautman, so I did not have to learn the hyperparameters myself. Even so, producing good paths was not automatic.
+
+Hyperparameters are directly dependent on the scale of coordinate system. This means that the hyperparameters must be tuned to the units that the data is given in. Hyperparameters learned in meters cannot be used in millimeters or image pixels: the scale of the parameters must match the scale of the data. Originally I implemented the algorithm in the world coordinate frame, and I had to switch to the image coordinate frame to match the original implementation. Figure \ref{hp} shows an exploration of the effect of hyperparameters on predicting a simple, straight-line path.
 
 \begin{figure*}[h]
 	\begin{subfigure}[b]{.5\linewidth}
@@ -254,7 +255,19 @@ where $r = |\x-\x'|^2$. This gives us nicely shaped paths, and we finally add in
 	\label{hp}
 \end{figure*}
 
-\section*{Experimental Results}
+\subsubsection{MAP Approximation}
+\quad As mentioned in the \nameref{isampling} section above, the next waypoint of the robot is given by the MAP assignment of the posterior distribution. However, it is not clear how this is obtained in the original work. The answer is that we take the mean of the resampled paths in order to approximate the MAP assignment. This is roughly equivalent, therefore, of taking the weighted mean of the Gaussian process samples, prior to resampling.
+
+Practically speaking, this is a shortcut. The reason for it is that the path with the largest weight is still unstable unless we take a very large number of samples. \footnote{This sentiment was conveyed by Peter Trautman via personal correspondence.} However, this potentially destroys multimodal distributions, which is why we used a particle filter in the first place. This seems to work well enough in this example, but an idea for improvement is described in \nameref{sec:future}.
+
+%* Covariance matrix is CRUCIAL. In fact, it's everything.
+%* Author was doing everything in pixels! This screws up my hyperparameters!
+%* How far into future to predict.
+%* How to get MAP (take the mean).
+%* Correspondence is key. In both cases, fixed major issues.
+%* Taking the mean to approximate the MAP: is this valid?
+
+\section{Experimental Results}
 
 \begin{figure}[h]
 	\begin{subfigure}{\linewidth}
@@ -286,10 +299,10 @@ where $r = |\x-\x'|^2$. This gives us nicely shaped paths, and we finally add in
 \end{figure}
 
 
-\section*{Next Steps}
+\section{Next Steps} \label{sec:future}
 
 
-\section*{Conclusion}
+\section{Conclusion}
 \quad In this project I have demonstrated the feasibility of the Interacting Gaussian Processes algorithm for path planning through human crowds. From these preliminary experiments, it seems that IGP has potential as a tractable method for searching through an infinitely large state space of actions.
 
 However, there is more work to be done. I was not able to match the author's reported performance, neither in path planning nor in computational efficiency. I have noted some immediate improvements that could be made to my implementation which would likely close this gap. Still, I've also demonstrated IGP's fragility in terms of its heavy reliance on parameter tuning. A compelling research problem for the future would be to create a version of IGP which learns these parameters online.
