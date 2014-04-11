@@ -145,12 +145,16 @@ The above is a nonlinear, multimodal distribution, so it can't be sampled direct
 
 \subsubsection*{Importance Sampling}
 \quad Now that we have a model, we wish to sample from it and take the mean as the desired path. Since we can't sample from it directly, we instead use the \emph{importance sampling} technique which is widely used in particle filters. Each sample is weighted by the ratio of the IGP to the basic GP (i.e. the Gaussian distribution, without the interaction potential):
-$$ w_i = \frac{p_{IGP}}{p_{GP}} = \frac{p_{IGP}((\fr,\f) | \ztot)}{\prod_{j=R}^n p(\samplej | \ztot)} = \frac{\psi((\fr,\f)_i) \prod_{j=R}^n p(\samplej | \ztot)}{\prod_{j=R}^n p(\samplej | \ztot)} = \psi((\fatj)_i)$$
+\begin{align*}
+w_i &= \frac{p_{IGP}}{p_{GP}} = \frac{p_{IGP}((\fr,\f) | \ztot)}{\prod_{j=R}^n p(\samplej | \ztot)} \\
+	&= \frac{\psi((\fr,\f)_i) \prod_{j=R}^n p(\samplej | \ztot)}{\prod_{j=R}^n p(\samplej | \ztot)} \\
+	&= \psi((\fatj)_i)
+\end{align*}
 where $\samplej$ is a single sample from the trajectory of agent $j$.
 
 Given this formulation for $p_{IGP}$ and an appropriate weighting $w_i$ for each sample, the ideal paths can now be expressed as:
 $$ (\fr,\f)^* = \argmax\left( \sum_{i=1}^N w_i(\fr,\f)_i \right) $$
-where $(\fr,\f)_i$ is a set of samples from the Gaussian processes $(\fatj)_i \sim \textrm{GP}(\fatj, m_t^{(j)}, k_t^{(j)})$ (detailed equations for the mean and covariance matrix can be found in the original paper). The total number of samples is $N$ and we take the robot's next position to be $\fr_{t+1}$. To approximate the optimal robot path $\fr$, we take the mean path over all samples after importance resampling:
+where $(\fr,\f)_i$ is a set of samples from the Gaussian processes $(\fatj)_i \sim \textrm{GP}(\fatj, m_t^{(j)}, k_t^{(j)})$. The total number of samples is $N$ and we take the robot's next position to be $\fr_{t+1}$. To approximate the optimal robot path $\fr$, we take the mean path over all samples after importance resampling:
 $$ \mathrm{f}^{(R)*}_t = \frac{\sum_{i=1}^N \mathrm{f}^{(R)}_t}{N} $$
 
 \section*{Implementation}
@@ -161,17 +165,12 @@ $$ \mathrm{f}^{(R)*}_t = \frac{\sum_{i=1}^N \mathrm{f}^{(R)}_t}{N} $$
 
 The dataset contains two annotated videos of pedestrian interaction captured from a bird's eye view. The one used depicts pedestrians entering and exiting a building.
 
-The main annotations are a matrix where each row has the format:
-\begin{verbatim}
-        [frame_number pedestrian_ID pos_x pos_z pos_y v_x v_z v_y]
-\end{verbatim}
-
-Thus for each frame $t$ we have potentially multiple pedestrian observations $\post$, and this forms our observation at time $t$:
+The main annotations are a matrix where each row gives the position of an agent $i$ in a particular video frame $t$. Thus for each frame $t$ we have potentially multiple pedestrian observations $\post$, and this forms our observation at time $t$:
 $$ \z_t = \pos^{(1:n)}_t $$
 where one of the $n$ pedestrians is chosen to represent the robot $R$. The velocities are not used in the present IGP formulation.
 
 The positions and velocities are in meters and were obtained with a homography matrix $H$, which is also provided with the annotations. To transform the positions back to image coordinates, it is necessary to apply the inverse homography transform:
-$$ \fourIdx{m}{}{}{}\post = H_{mw}^{-1} \cdot \fourIdx{w}{}{}{}\post \qquad m = \mathrm{image}, w = \mathrm{world} $$
+$$ \fourIdx{m}{}{}{}\post = H_{mw}^{-1} \cdot \fourIdx{w}{}{}{}\post \quad m = \mathrm{image}, w = \mathrm{world} $$
 The intrinsic camera parameters are not needed; it is presumed that they are included in the camera matrix provided by the dataset. There is also no translation needed; the origin of the world can be taken to be the (transformed) origin of the image without loss of generality. Thus, pixel coordinates can be expressed as
 $$ r = -f_x \frac{x}{z} = \frac{u}{z} \qquad c = -f_y \frac{y}{z} = \frac{v}{z} $$
 where $f_x,\;f_y$ are the intrinsic camera parameters and $x,\;y$ are coordinates in the image frame. So to obtain pixel coordinates from image coordinates it is necessary only to normalize so that $z=1$:
@@ -245,6 +244,9 @@ $$ \begin{pmatrix}r\\c\\1\end{pmatrix} = \begin{pmatrix}\fourIdx{m}{}{}{}x/z\\\f
 
 
 \section*{Next Steps}
+
+
+\section*{Conclusion}
 
 
 \bibliography{references}
