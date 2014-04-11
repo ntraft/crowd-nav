@@ -31,6 +31,7 @@
 \sloppy
 \usepackage{fancyhdr}
 \usepackage{verbatim}
+\usepackage{placeins}
 
 \usepackage{hyperref}
 \hypersetup{colorlinks=true}
@@ -98,6 +99,7 @@ Future:
 \renewcommand{\thesection}{\Roman{section}}
 \thispagestyle{empty}
 
+\newcommand{\texttildemid}{{\raise.17ex\hbox{$\scriptstyle\sim$}}}
 \newcommand{\f}{\mathbf{f}}
 \newcommand{\fr}{\f^{(R)}}
 \newcommand{\fati}{\f^{(i)}}
@@ -107,6 +109,7 @@ Future:
 \newcommand{\ztot}{\z_{1:t}}
 \newcommand{\pos}{\mathrm{pos}}
 \newcommand{\post}{\pos^{(i)}_t}
+\newcommand{\x}{\mathbf{x}}
 
 \section*{Overview}
 \quad In their 2010 IROS publication \cite{Trautman2010}, Trautman and Krause develop a path planning algorithm that is safe and yet does not suffer from the ``freezing robot problem'' (FRP). Their method consists of a model of crowd interaction combined with a particle-based inference method to predict where the crowd (and the robot) should be at some time $t+1$ in the future. The idea is that if one can develop a reliable model of intelligent agents in a crowd, and include the robot as just another of those intelligent agents, then the predictions of the model yield the robot's future path.
@@ -178,14 +181,32 @@ $$ \begin{pmatrix}r\\c\\1\end{pmatrix} = \begin{pmatrix}\fourIdx{m}{}{}{}x/z\\\f
 
 \subsection*{Technical Hurdles}
 
-\begin{figure}[h]
+\quad There are some nuances to using a Gaussian process that can stun and bewilder those who are new to them. IGP is very sensitive to these nuances, and an understanding of Gaussian processes is essential to getting it to work.
+
+In addition to this, there are other parameters to be tuned and implementation choices which are left open-ended by the original author. These choices comprise the hurdles one has to clear to see good results from IGP.
+
+\subsubsection*{The Covariance Function}
+\quad The covariance function (also known as a \emph{kernel}) used for the Gaussian processes in IGP is an absolutely crucial consideration. However, the authors of \cite{Trautman2010} not describe their choice of kernel. In their 2013 follow-up work, they mention the class of kernel used, but do not go into sufficient detail to reproduce their implementation. \cite{Trautman2013}
+
+What is needed from our Gaussian process is a prior which is straight most of the time, but with some curviness. This encodes our assumptions about the way humans move. People almost always walk in straight lines, so we need a Gaussian process that gives us that. We also would like some curviness for those times when people don't walk straight, and we also need to encode the noisiness of our observations. \footnote{From correspondence with the author, Peter Trautman.}
+
+From these requirements, we can see that the traditional kernel for Gaussian processes won't be suitable. The general-purpose kernel is the squared exponential (SE) kernel,
+$$ k(\x,\x') = \sigma^2 \exp\Big(-\frac{1}{2\ell^2}|\x - \x'|^2\Big) $$
+where $\x$ and $\x'$ denote two vectors of independent variables whose covariance we wish to calculate, and where $\sigma^2$ and $\ell$ are the noise and length hyperparameters, respectively.
+
+First of all, the SE kernel is too variable; too ``curvy''. An example is given in Figure \ref{cov}. The aimlessly meandering paths seen there do not represent a person enroute to a destination. A much bigger problem, moreover, is the fact that SE is \emph{shift invariant}. Informally, this means that it will gravitate toward the mean wherever there is no data. Observe how it hovers about the origin in the example.
+
+In contrast, the linear regression kernel is a \emph{non}-shift-invariant kernel which satisfies our need for a straight path to continue in a straight line in the absence of data. Also known as a dot product covariance function, it is expressed as
+$$ k(\x,\x') = \sigma^2 + \x \cdot \x' $$
+
+\begin{figure}[H]
 	\begin{subfigure}{\linewidth}
-	\includegraphics[width=1.1\linewidth]{SE+noise-prior.png}
+	\includegraphics[width=1.0\linewidth]{SE+noise-prior.png}
 	\caption{A summed kernel composed of squared exponential and noise kernels.}
 	\label{a}
 	\end{subfigure}
 	\begin{subfigure}{\linewidth}
-	\includegraphics[width=1.1\linewidth]{matern+lin+noise-prior.png}
+	\includegraphics[width=1.0\linewidth]{matern+lin+noise-prior.png}
 	\caption{A summed kernel composed of Matérn, linear regression, and noise kernels.}
 	\label{b}
 	\end{subfigure}
@@ -193,10 +214,21 @@ $$ \begin{pmatrix}r\\c\\1\end{pmatrix} = \begin{pmatrix}\fourIdx{m}{}{}{}x/z\\\f
 	\label{cov}
 \end{figure}
 
+Having only straight lines generalizes to simple linear regression, however, which is obviously not desirable. We still need to be able to approximate nonlinear paths, so we add in one of the Matérn class of covariance functions defined in \cite{gpml},
+$$ k(r) = \left(1 + \frac{\sqrt{5}r}{\ell} + \frac{5r^2}{3\ell^2} \right) \exp\left(-\frac{\sqrt{5}r}{\ell}\right) $$
+where $r = |\x-\x'|^2$. This gives us nicely shaped paths, and we finally add in a noise kernel, which is just a constant variance applied to our training data. The final choice of kernel is illustrated in Figure \ref{cov}.
+
+%* Covariance matrix is CRUCIAL. In fact, it's everything.
+%* Author was doing everything in pixels! This screws up my hyperparameters!
+%* How far into future to predict.
+%* How to get MAP (take the mean).
+%* Correspondence is key. In both cases, fixed major issues.
+%* Taking the mean to approximate the MAP: is this valid?
+
 \begin{figure*}[h]
 	\begin{subfigure}[b]{.5\linewidth}
 	\includegraphics[width=\linewidth]{bad-cov-bad-hp.png}
-	\caption{Poor choice of covariance function (squared exponential) and poorly tuned hyperparameters. Notice the attraction toward the mean, $(0,0)$}
+	\caption{Poor choice of covariance function (squared exponential) and poorly tuned hyperparameters. Notice the attraction toward the mean, $(0,0)$.}
 	\label{a}
 	\end{subfigure}
 	\quad
@@ -236,13 +268,13 @@ $$ \begin{pmatrix}r\\c\\1\end{pmatrix} = \begin{pmatrix}\fourIdx{m}{}{}{}x/z\\\f
 	\label{b}
 	\end{subfigure}
 	\caption{Sample output of the final product. Blue paths represent each agent's path up to the current time point, as well as their ultimate destination.}
-	\label{cov}
+	\label{screenshot}
 \end{figure}
 
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=\linewidth]{experiment.png}
-	\caption{The results of the algorithm performed on 12 pedestrians from a particularly crowded segment of the video. Observe that IGP almost always finds an equal length or shorter path than the pedestrian. However, the pedestrian usually maintains a larger distance from other agents, and IGP may be slightly unsafe based on these results.}
+	\caption{The results of the algorithm performed on 12 pedestrians from a particularly crowded segment of the video. Observe that IGP almost always finds an equal length or shorter path than the pedestrian. However, the pedestrian usually maintains a larger distance from other agents, though IGP never goes below the lowest observed actual separation (\texttildemid10 pixels), so it is considered safe.}
 	\label{experiment}
 \end{figure}
 
