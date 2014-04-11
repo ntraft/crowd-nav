@@ -179,16 +179,13 @@ $$ \begin{pmatrix}r\\c\\1\end{pmatrix} = \begin{pmatrix}\fourIdx{m}{}{}{}x/z\\\f
 \subsection*{Technical Hurdles}
 
 \begin{figure}[h]
-	\centering
-	\begin{subfigure}[b]{0.8\textwidth}
-	\centering
-	\includegraphics[width=\textwidth]{SE+noise-prior.png}
+	\begin{subfigure}{\linewidth}
+	\includegraphics[width=1.1\linewidth]{SE+noise-prior.png}
 	\caption{A summed kernel composed of squared exponential and noise kernels.}
 	\label{a}
 	\end{subfigure}
-	\begin{subfigure}[b]{0.8\textwidth}
-	\centering
-	\includegraphics[width=\textwidth]{matern+lin+noise-prior.png}
+	\begin{subfigure}{\linewidth}
+	\includegraphics[width=1.1\linewidth]{matern+lin+noise-prior.png}
 	\caption{A summed kernel composed of Matérn, linear regression, and noise kernels.}
 	\label{b}
 	\end{subfigure}
@@ -196,48 +193,47 @@ $$ \begin{pmatrix}r\\c\\1\end{pmatrix} = \begin{pmatrix}\fourIdx{m}{}{}{}x/z\\\f
 	\label{cov}
 \end{figure}
 
-\begin{figure}[h]
-	\centering
-	\begin{subfigure}[b]{0.8\textwidth}
-	\centering
-	\includegraphics[width=\textwidth]{bad-cov-bad-hp.png}
-	\caption{Poor choice of covariance function (squared exponential) and poorly tuned hyperparameters.}
+\begin{figure*}[h]
+	\begin{subfigure}[b]{.5\linewidth}
+	\includegraphics[width=\linewidth]{bad-cov-bad-hp.png}
+	\caption{Poor choice of covariance function (squared exponential) and poorly tuned hyperparameters. Notice the attraction toward the mean, $(0,0)$}
 	\label{a}
 	\end{subfigure}
-	\begin{subfigure}[b]{0.8\textwidth}
-	\centering
-	\includegraphics[width=\textwidth]{bad-cov-good-hp.png}
+	\quad
+	\begin{subfigure}[b]{.5\linewidth}
+	\includegraphics[width=\linewidth]{bad-cov-good-hp.png}
 	\caption{Improved hyperparameters are still not enough to overcome a fundamentally incorrect covariance function.}
+    \vspace{2ex}
 	\label{b}
 	\end{subfigure}
-	\begin{subfigure}[b]{0.8\textwidth}
-	\centering
-	\includegraphics[width=\textwidth]{good-cov-bad-hp.png}
+	\begin{subfigure}[b]{.5\linewidth}
+	\includegraphics[width=\linewidth]{good-cov-bad-hp.png}
 	\caption{Good choice of covariance function (Matérn + linear + noise) brings us much closer to the mark, but badly tuned hyperparameters still makes things difficult.}
 	\label{c}
 	\end{subfigure}
-	\begin{subfigure}[b]{0.8\textwidth}
-	\centering
-	\includegraphics[width=\textwidth]{good-cov-good-hp.png}
+	\quad
+	\begin{subfigure}[b]{.5\linewidth}
+	\includegraphics[width=\linewidth]{good-cov-good-hp.png}
 	\caption{Good covariance function combined with good hyperparameters.}
+    \vspace{2ex}
 	\label{d}
 	\end{subfigure}
 	\caption{The importance of choosing proper hyperparameters. Hyperparameters must be learned to properly match what we expect from human and robot movement patterns. Hyperparameters must be further tuned for a particular scene, since they are closely related to the scale of our coordinate frame.}
 	\label{hp}
-\end{figure}
+\end{figure*}
 
 \section*{Experimental Results}
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=\textwidth]{experiment.png}
+	\includegraphics[width=\linewidth]{experiment.png}
 	\caption{The results of the algorithm performed on 12 pedestrians from a particularly crowded segment of the video. Observe that IGP almost always finds an equal length or shorter path than the pedestrian. However, the pedestrian usually maintains a larger distance from other agents, and IGP may be slightly unsafe based on these results.}
 	\label{experiment}
 \end{figure}
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=\textwidth]{sample-results.png}
+	\includegraphics[width=\linewidth]{sample-results.png}
 	\caption{The results reported in the original paper, compiled from 10 trials. Here, we see that IGP outperforms human pedestrians in both path length and path safety. We aren't told which 10 pedestrians are evaluated in the original paper, so these results are somewhat anecdotal and will not necessarily align with our own.}
 	\label{sample}
 \end{figure}
