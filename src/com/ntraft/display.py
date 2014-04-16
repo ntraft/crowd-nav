@@ -19,6 +19,7 @@ TODO
 - Fix interaction potential
 - Use planned waypoints for further planning, not just scoring.
 	- Once you have them, draw them as well.
+- Re-run experiment after fixing the above bugs.
 - Have a way to draw prior predictions (before reweighting).
 - Have a way to flip b/w prior, posterior, and MAP.
 - Can maybe think about drawing other things like future paths or goals.
