@@ -35,11 +35,11 @@ class Display:
 		self.timesteps = timesteps
 		self.agents = agents
 		self.destinations = destinations
-		self.paths = []
+		self.predictions = util.empty_predictions
 		self.agent_num = 0
 		self.agent_txt = ''
 		self.last_t = -1
-		self.draw_samples = False
+		self.drawing_choice = 3
 	
 	def set_frame(self, frame):
 		self.cap.set(POS_FRAMES, frame)
@@ -62,8 +62,8 @@ class Display:
 		_, frame = self.cap.read()
 	
 		frame_txt = "{:0>2}:{:0>2}".format(now//60, now%60)
-		if self.paths:
-			adex = self.agent_num % len(self.paths)
+		if self.predictions.past:
+			adex = self.agent_num % len(self.predictions.past)
 		
 		# Check for end of annotations.
 		if frame_num >= len(self.frames):
@@ -81,13 +81,11 @@ class Display:
 				self.agent_txt = 'Agent: {}'.format(displayed_agent)
 				if t >= 0 and t != self.last_t:
 					self.last_t = t
-					self.paths, self.true_paths, self.predictions, self.MAP = (
-						util.make_predictions(t, self.timesteps, self.agents)
-					)
-					if self.MAP[adex].shape[0] > 1:
-						t_plus_one = self.MAP[adex][1]
+					self.predictions = util.make_predictions(t, self.timesteps, self.agents)
+					if self.predictions.MAP[adex].shape[0] > 1:
+						t_plus_one = self.predictions.MAP[adex][1]
 					if with_scores:
-						ped_scores, IGP_scores = util.calc_scores(self.true_paths, self.MAP)
+						ped_scores, IGP_scores = util.calc_scores(self.predictions.true_paths, self.predictions.MAP)
 						update_plot(ped_scores, IGP_scores)
 		
 		# Draw the obstacles.
@@ -106,23 +104,24 @@ class Display:
 			draw_text(frame, pt, self.agent_txt)
 		
 		# Draw in the pedestrians, if we have them.
-		if self.paths:
+		if self.predictions.past:
 			# The paths they've already taken.
-			for path in self.paths:
+			for path in self.predictions.past:
 				draw_path(frame, path, (192,192,192))
 			
 			# The ground truth for a single agent.
-			draw_path(frame, self.true_paths[adex], (0,255,0))
+			draw_path(frame, self.predictions.true_paths[adex], (0,255,0))
 			
 			# The predictions for a single agent.
-			if self.draw_samples:
+			if self.drawing_choice == 1 or self.drawing_choice == 2:
+				preds = self.predictions.prior if self.drawing_choice == 1 else self.predictions.posterior
 				for i in range(util.NUM_SAMPLES):
-					path = self.predictions[adex][:,i,:]
+					path = preds[adex][:,i,:]
 					path = np.column_stack((path, np.ones(path.shape[0])))
 					draw_path(frame, path, (255,0,0))
 			else: # just the planned path
-				draw_path(frame, self.MAP[adex], (0,192,192))
-				draw_waypoints(frame, self.paths[adex], (255,211,176))
+				draw_path(frame, self.predictions.MAP[adex], (0,192,192))
+				draw_waypoints(frame, self.predictions.past[adex], (255,211,176))
 		
 		cv2.imshow('frame', frame)
 		return t_plus_one

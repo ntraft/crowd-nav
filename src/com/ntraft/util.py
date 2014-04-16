@@ -10,6 +10,7 @@ import time
 
 from com.ntraft.gp import ParametricGaussianProcess
 import com.ntraft.covariance as cov
+from collections import namedtuple
 
 NUM_SAMPLES = 100	# number of particles
 OBS_NOISE = 0.00005	# noise variance
@@ -63,12 +64,15 @@ def to_image_frame(Hinv, loc):
 	loc = np.dot(Hinv, loc) # to camera frame
 	return loc/loc[2] # to pixels (from millimeters)
 
+Predictions = namedtuple('Predictions', ['past', 'true_paths', 'prior', 'posterior', 'MAP'])
+empty_predictions = Predictions([],[],[],[],[])
+
 @timeit
 def make_predictions(t, timesteps, agents):
 	peds = timesteps[t]
 	past_paths = []
 	true_paths = []
-	predictions = []
+	prior = []
 	for ped in peds:
 		# Get the past and future paths of the agent.
 		past_plus_dest, future = get_path_at_time(t, agents[ped])
@@ -79,13 +83,13 @@ def make_predictions(t, timesteps, agents):
 		t_future = future[:,0]
 		gp = ParametricGaussianProcess(past_plus_dest, t_future, xkernel, ykernel)
 		samples = gp.sample(NUM_SAMPLES)
-		predictions.append(samples)
+		prior.append(samples)
 	
 	# Perform importance sampling and get the maximum a-posteriori path.
-	weights = interaction(predictions)
-	predictions = resample(predictions, weights)
-	MAP = [get_final_path(p) for p in predictions]
-	return (past_paths, true_paths, predictions, MAP)
+	weights = interaction(prior)
+	posterior = resample(prior, weights)
+	MAP = [get_final_path(p) for p in posterior]
+	return Predictions(past_paths, true_paths, prior, posterior, MAP)
 
 def get_path_at_time(t, fullpath):
 	path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==t)
