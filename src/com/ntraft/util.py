@@ -68,7 +68,7 @@ Predictions = namedtuple('Predictions', ['past', 'true_paths', 'prior', 'posteri
 empty_predictions = Predictions([],[],[],[],[])
 
 @timeit
-def make_predictions(t, timesteps, agents):
+def make_predictions(t, timesteps, agents, robot=-1, past_plan=None):
 	peds = timesteps[t]
 	past_paths = []
 	true_paths = []
@@ -76,7 +76,10 @@ def make_predictions(t, timesteps, agents):
 	for ped in peds:
 		# Get the past and future paths of the agent.
 		past_plus_dest, future = get_path_at_time(t, agents[ped])
-		past_paths.append(past_plus_dest[:-1,1:4])
+		past_paths.append(past_plus_dest[:-1,1:4].copy())
+		# Replace human's path with robot's path.
+		if past_plan is not None and ped == robot:
+			past_plus_dest[:-1,1:] = past_plan
 		true_paths.append(future[:,1:4])
 		
 		# Predict possible paths for the agent.

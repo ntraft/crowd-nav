@@ -17,11 +17,7 @@ POS_FRAMES = cv2.cv.CV_CAP_PROP_POS_FRAMES
 TODO
 
 - Fix interaction potential
-- Use planned waypoints for further planning, not just scoring.
-	- Once you have them, draw them as well.
 - Re-run experiment after fixing the above bugs.
-- Draw past waypoints for all drawing_choice modes.
-	- Except for planned path; then show past plan.
 - Can maybe think about drawing other things like future paths or goals.
 '''
 
@@ -81,7 +77,7 @@ class Display:
 				self.agent_txt = 'Agent: {}'.format(displayed_agent)
 				if t >= 0 and t != self.last_t:
 					self.last_t = t
-					self.predictions = util.make_predictions(t, self.timesteps, self.agents)
+					self.predictions = util.make_predictions(t, self.timesteps, self.agents, agent, past_plan)
 					if self.predictions.MAP[adex].shape[0] > 1:
 						t_plus_one = self.predictions.MAP[adex][1]
 					if with_scores:
