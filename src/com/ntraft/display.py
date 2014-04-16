@@ -13,6 +13,17 @@ import com.ntraft.util as util
 POS_MSEC = cv2.cv.CV_CAP_PROP_POS_MSEC
 POS_FRAMES = cv2.cv.CV_CAP_PROP_POS_FRAMES
 
+'''
+TODO
+
+- Fix interaction potential
+- Use planned waypoints for further planning, not just scoring.
+	- Once you have them, draw them as well.
+- Have a way to draw prior predictions (before reweighting).
+- Have a way to flip b/w prior, posterior, and MAP.
+- Can maybe think about drawing other things like future paths or goals.
+'''
+
 class Display:
 	
 	def __init__(self, cap, Hinv, obs_map, frames, timesteps, agents, destinations):
@@ -149,7 +160,6 @@ def draw_text(frame, pt, frame_txt):
 	cv2.rectangle(frame, lower_left, upper_right, (0,0,0), -1, cv2.CV_AA)
 	cv2.putText(frame, frame_txt, pt, font, scale, (0,255,0), thickness, cv2.CV_AA)
 	return lower_left, upper_right
-
 
 def crossline(curr, prev, length):
 	diff = curr - prev
