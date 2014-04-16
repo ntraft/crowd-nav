@@ -21,6 +21,7 @@ TODO
 	- Once you have them, draw them as well.
 - Re-run experiment after fixing the above bugs.
 - Draw past waypoints for all drawing_choice modes.
+	- Except for planned path; then show past plan.
 - Can maybe think about drawing other things like future paths or goals.
 '''
 
@@ -120,7 +121,7 @@ class Display:
 					draw_path(frame, path, (255,0,0))
 			else: # just the planned path
 				draw_path(frame, self.predictions.MAP[adex], (0,192,192))
-				draw_waypoints(frame, self.predictions.past[adex], (255,211,176))
+			draw_waypoints(frame, self.predictions.past[adex], (255,211,176))
 		
 		cv2.imshow('frame', frame)
 		return t_plus_one
