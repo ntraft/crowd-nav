@@ -20,8 +20,7 @@ TODO
 - Use planned waypoints for further planning, not just scoring.
 	- Once you have them, draw them as well.
 - Re-run experiment after fixing the above bugs.
-- Have a way to draw prior predictions (before reweighting).
-- Have a way to flip b/w prior, posterior, and MAP.
+- Draw past waypoints for all drawing_choice modes.
 - Can maybe think about drawing other things like future paths or goals.
 '''
 
@@ -39,7 +38,7 @@ class Display:
 		self.agent_num = 0
 		self.agent_txt = ''
 		self.last_t = -1
-		self.drawing_choice = 3
+		self.drawing_choice = 0
 	
 	def set_frame(self, frame):
 		self.cap.set(POS_FRAMES, frame)

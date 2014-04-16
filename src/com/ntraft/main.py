@@ -77,6 +77,9 @@ def main():
 		elif key == DOWN:
 			disp.agent_num -= 1
 			disp.reset_frame()
+		elif key == ord('s'):
+			disp.drawing_choice = (disp.drawing_choice + 1) % 3
+			disp.reset_frame()
 	
 	cap.release()
 	cv2.destroyAllWindows()
