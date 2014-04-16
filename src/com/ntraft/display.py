@@ -97,20 +97,20 @@ class Display:
 		if self.paths:
 			# The paths they've already taken.
 			for path in self.paths:
-				draw_path(frame, path, (255,0,0))
+				draw_path(frame, path, (192,192,192))
 			
 			# The ground truth for a single agent.
-			draw_path(frame, self.true_paths[adex], (192,0,192))
+			draw_path(frame, self.true_paths[adex], (0,255,0))
 			
 			# The predictions for a single agent.
 			if self.draw_samples:
 				for i in range(util.NUM_SAMPLES):
 					path = self.predictions[adex][:,i,:]
 					path = np.column_stack((path, np.ones(path.shape[0])))
-					draw_path(frame, path, (0,192,192))
+					draw_path(frame, path, (255,0,0))
 			else: # just the planned path
-				path = self.MAP[adex]
-				draw_path(frame, path, (0,192,192))
+				draw_path(frame, self.MAP[adex], (0,192,192))
+				draw_waypoints(frame, self.paths[adex], (255,211,176))
 		
 		cv2.imshow('frame', frame)
 		return t_plus_one
@@ -150,10 +150,31 @@ def draw_text(frame, pt, frame_txt):
 	cv2.putText(frame, frame_txt, pt, font, scale, (0,255,0), thickness)
 	return lower_left, upper_right
 
+
+def crossline(curr, prev, length):
+	diff = curr - prev
+	if diff[1] == 0:
+		p1 = (int(curr[1]), int(curr[0]-length/2))
+		p2 = (int(curr[1]), int(curr[0]+length/2))
+	else:
+		slope = -diff[0]/diff[1]
+		x = np.cos(np.arctan(slope)) * length / 2
+		y = slope * x
+		p1 = (int(curr[1]-y), int(curr[0]-x))
+		p2 = (int(curr[1]+y), int(curr[0]+x))
+	return p1, p2
+
 def draw_path(frame, path, color):
-	prev = None
-	for loc in ((int(y), int(x)) for x,y,z in path):
+	if path.shape[0] > 0:
+		prev = path[0]
+		for curr in path[1:]:
+			loc1 = (int(prev[1]), int(prev[0])) # (y, x)
+			loc2 = (int(curr[1]), int(curr[0])) # (y, x)
+			p1, p2 = crossline(curr, prev, 3)
+			cv2.line(frame, p1, p2, color, 1, cv2.CV_AA)
+			cv2.line(frame, loc1, loc2, color, 1, cv2.CV_AA)
+			prev = curr
+
+def draw_waypoints(frame, points, color):
+	for loc in ((int(y), int(x)) for x,y,z in points):
 		cv2.circle(frame, loc, 3, color, -1)
-		if prev:
-			cv2.line(frame, prev, loc, color, 1)
-		prev = loc

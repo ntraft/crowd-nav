@@ -72,7 +72,7 @@ def make_predictions(t, timesteps, agents):
 	for ped in peds:
 		# Get the past and future paths of the agent.
 		past_plus_dest, future = get_path_at_time(t, agents[ped])
-		past_paths.append(past_plus_dest[:,1:4])
+		past_paths.append(past_plus_dest[:-1,1:4])
 		true_paths.append(future[:,1:4])
 		
 		# Predict possible paths for the agent.
