@@ -146,8 +146,8 @@ def draw_text(frame, pt, frame_txt):
 	lower_left = (pt[0], pt[1])
 	pt = (pt[0], pt[1]-baseline)
 	upper_right = (pt[0]+sz[0], pt[1]-sz[1]-2)
-	cv2.rectangle(frame, lower_left, upper_right, (0,0,0), -1)
-	cv2.putText(frame, frame_txt, pt, font, scale, (0,255,0), thickness)
+	cv2.rectangle(frame, lower_left, upper_right, (0,0,0), -1, cv2.CV_AA)
+	cv2.putText(frame, frame_txt, pt, font, scale, (0,255,0), thickness, cv2.CV_AA)
 	return lower_left, upper_right
 
 
@@ -177,4 +177,4 @@ def draw_path(frame, path, color):
 
 def draw_waypoints(frame, points, color):
 	for loc in ((int(y), int(x)) for x,y,z in points):
-		cv2.circle(frame, loc, 3, color, -1)
+		cv2.circle(frame, loc, 3, color, -1, cv2.CV_AA)
