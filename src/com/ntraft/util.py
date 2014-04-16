@@ -108,7 +108,6 @@ def dist(loc1, loc2):
 
 def rbf(loc1, loc2):
 	d = dist(loc1, loc2)
-	d *= 100 # Hack for now, to get distances into a sensible range.
 	return 1 - ALPHA*np.exp(-(d**2) / (2*H**2))
 
 def interaction(allpriors):

@@ -16,8 +16,11 @@ POS_FRAMES = cv2.cv.CV_CAP_PROP_POS_FRAMES
 '''
 TODO
 
-- Fix interaction potential
+- New problem: cannot assume the robot will take the same time to arrive at
+	the goal!
 - Re-run experiment after fixing the above bugs.
+- May still need to play with the interaction potential.
+	- Check files Pete sent to see if his parameters are in there.
 - Can maybe think about drawing other things like future paths or goals.
 '''
 
