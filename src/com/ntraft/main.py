@@ -103,7 +103,7 @@ def run_experiment(cap, disp, timeframes, timesteps, agents):
 			frame_num = timeframes[int(ped_path[t,0])]
 			print 'doing frame', frame_num
 			disp.set_frame(frame_num)
-			final_path[t+1] = disp.do_frame(agent, False)
+			final_path[t+1] = disp.do_frame(agent, final_path, False)
 			if cv2.waitKey(1) != -1:
 				print 'Canceled!'
 				return

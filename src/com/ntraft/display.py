@@ -52,7 +52,7 @@ class Display:
 		frame_num = int(self.cap.get(POS_FRAMES))
 		self.set_frame(frame_num-2)
 
-	def do_frame(self, agent=-1, with_scores=True):
+	def do_frame(self, agent=-1, past_plan=None, with_scores=True):
 		if not self.cap.isOpened():
 			raise Exception('Video stream closed.')
 		
@@ -114,6 +114,7 @@ class Display:
 			
 			# The predictions for a single agent.
 			if self.drawing_choice == 1 or self.drawing_choice == 2:
+				draw_waypoints(frame, self.predictions.past[adex], (255,211,176))
 				preds = self.predictions.prior if self.drawing_choice == 1 else self.predictions.posterior
 				for i in range(util.NUM_SAMPLES):
 					path = preds[adex][:,i,:]
@@ -121,7 +122,10 @@ class Display:
 					draw_path(frame, path, (255,0,0))
 			else: # just the planned path
 				draw_path(frame, self.predictions.MAP[adex], (0,192,192))
-			draw_waypoints(frame, self.predictions.past[adex], (255,211,176))
+				if past_plan is not None:
+					draw_waypoints(frame, past_plan, (0,192,192))
+				else:
+					draw_waypoints(frame, self.predictions.past[adex], (255,211,176))
 		
 		cv2.imshow('frame', frame)
 		return t_plus_one
