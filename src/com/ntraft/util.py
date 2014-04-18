@@ -4,6 +4,8 @@ Various utility functions.
 @author: ntraft
 '''
 from __future__ import division
+from __future__ import print_function
+import sys
 import numpy as np
 from numpy.core.numeric import inf
 import time
@@ -14,8 +16,8 @@ from collections import namedtuple
 
 NUM_SAMPLES = 100	# number of particles
 OBS_NOISE = 0.00005	# noise variance
-ALPHA = 0.8			# repelling force
-H = 24				# safety distance
+ALPHA = 1.0			# repelling force
+H = 225				# safety distance
 
 # The all-important kernels and their hyperparameters.
 xkernel = cov.summed_kernel(
@@ -46,7 +48,7 @@ def reset_timer():
 	total_time = 0; total_runs = 0
 
 def report_time():
-	print 'IGP on average took {:.2f} seconds with {} particles.'.format(total_time/total_runs, NUM_SAMPLES)
+	print('IGP on average took {:.2f} seconds with {} particles.'.format(total_time/total_runs, NUM_SAMPLES))
 
 def to_pixels(Hinv, loc):
 	"""
@@ -125,8 +127,15 @@ def interaction(allpriors):
 				for t in range(min(len(agent_j), len(agent_k))):
 					weights[i] *= rbf(agent_j[t,i], agent_k[t,i])
 	# Renormalize
-	# TODO deal with the case when all paths are weighted to 0
-	weights /= np.sum(weights)
+	total = np.sum(weights)
+	if total == 0:
+		# If there is no safe path, we would normally stop the robot. For now,
+		# I'd rather choose the mean instead. Simulate this by weighting all
+		# paths equally.
+		print("WARNING: All paths weighted to 0.", file=sys.stderr)
+		weights = np.ones(NUM_SAMPLES)
+		total = NUM_SAMPLES
+	weights /= total
 	return weights
 
 def resample(allpriors, weights):
