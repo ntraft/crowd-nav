@@ -36,3 +36,6 @@ cmake_install.cmake
 
 # Data
 ewap_dataset
+
+# Experiments
+experiment.txt

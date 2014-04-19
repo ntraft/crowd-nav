@@ -17,7 +17,7 @@ from collections import namedtuple
 NUM_SAMPLES = 100	# number of particles
 OBS_NOISE = 0.00005	# noise variance
 ALPHA = 1.0			# repelling force
-H = 225				# safety distance
+H = 15				# safety distance
 
 # The all-important kernels and their hyperparameters.
 xkernel = cov.summed_kernel(
