@@ -23,7 +23,7 @@ s = 0.00000	# noise variance
 # T = np.random.uniform(-5, 0, size=(N,))
 T = np.linspace(-10, 0, N)
 # T = np.linspace(-90, 0, N)
-# T[-1] = 19.6 # set a goal point
+T[-1] = 19.6 # set a goal point
 # T[-1] = 175 # set a goal point
 x = x1(T) + s*np.random.randn(N)
 y = x2(T) + s*np.random.randn(N)
@@ -65,28 +65,41 @@ pl.figure(1)
 pl.plot(xs, ys)
 pl.title('Ten samples from the GP prior')
 
-# draw 10 samples from the posterior
-xs = xgp.sample(5)
-ys = ygp.sample(5)
-pl.figure(2)
-pl.subplots_adjust(0.05, 0.1, 0.95, 0.9)
-pl.subplot(1,2,1)
-pl.plot(x, y, 'yo', ms=8)
-pl.plot(xs, ys)
-pl.title('Five samples from the GP posterior')
-pl.axis(axis)
+# draw samples from the posterior
+ns = 100
+xs = xgp.sample(ns)
+ys = ygp.sample(ns)
 
 # illustrate the possible paths.
-pl.subplot(1,2,2)
-ns = 100
+pl.figure(2)
+pl.subplots_adjust(0.05, 0.1, 0.95, 0.9)
+
+pl.subplot(2,2,1)
 pl.plot(x, y, 'yo', ms=8)
-xmean = np.mean(xgp.sample(ns), 1)
-ymean = np.mean(ygp.sample(ns), 1)
+ne = 5
+pl.plot(xs[:,0:ne], ys[:,0:ne], 'g-')
+pl.title('{} samples from the GP posterior'.format(ne))
+pl.axis(axis)
+
+pl.subplot(2,2,2)
+pl.plot(x, y, 'yo', ms=8)
+pl.plot(xs, ys, 'g-')
+pl.title('{} samples from the GP posterior'.format(ns))
+pl.axis(axis)
+
+pl.subplot(2,2,3)
+pl.plot(x, y, 'yo', ms=8)
+pl.plot(x1(Ttest), x2(Ttest), 'b-')
+pl.plot(xgp.mu, ygp.mu, 'r--', lw=2)
+pl.title('Predictive mean and ground truth')
+pl.axis(axis)
+
+pl.subplot(2,2,4)
+pl.plot(x, y, 'yo', ms=8)
+xmean = np.mean(xs, 1)
+ymean = np.mean(ys, 1)
 pl.plot(xmean, ymean, 'r--', lw=2)
 pl.title('Mean of {} samples'.format(ns))
-# pl.plot(x1(Ttest), x2(Ttest), 'b-')
-# pl.plot(xgp.mu, ygp.mu, 'r--', lw=2)
-# pl.title('Mean predictions')
 pl.axis(axis)
 
 pl.show()
