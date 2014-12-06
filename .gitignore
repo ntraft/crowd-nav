@@ -6,10 +6,18 @@
 *.bbl
 *.blg
 
+# Mac meta files
+.DS_Store
+
+# IntelliJ project files
+.idea/misc.xml
+.idea/workspace.xml
+
 # Eclipse project files
-.cproject
 .project
 .settings
+.cproject
+.pydevproject
 
 # Compiled Object files
 *.slo
