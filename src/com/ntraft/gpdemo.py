@@ -10,7 +10,7 @@ if sys.platform.startswith('darwin'):
 import matplotlib.pyplot as pl
 
 # This is the true unknown function we are trying to approximate
-x1 = lambda x: x.flatten() # y = x
+x1 = lambda x: x.flatten()
 x2 = lambda x: x.flatten() # y = x
 # x2 = lambda x: 2*np.ones_like(x) # constant
 # x2 = lambda x: np.sin(0.9*x).flatten() # sin
@@ -27,7 +27,6 @@ T[-1] = 19.6 # set a goal point
 # T[-1] = 175 # set a goal point
 x = x1(T) + s*np.random.randn(N)
 y = x2(T) + s*np.random.randn(N)
-z = np.column_stack((T, x, y))
 
 # points we're going to make predictions at.
 Ttest = np.linspace(0, 20, n)
@@ -43,7 +42,7 @@ axis = [-20, 35, -10, 25]
 # kernel = cov.linear_kernel(-2.87701)
 # xkernel = cov.summed_kernel(cov.sq_exp_kernel(2.5, 1), cov.noise_kernel(0.01))
 # ykernel = cov.summed_kernel(cov.sq_exp_kernel(2.5, 1), cov.noise_kernel(0.01))
-# Custom Hyperparams
+# Cafeteria Hyperparams (pre-evaluated)
 # xkernel = cov.summed_kernel(
 # 	cov.matern_kernel(33.542, 47517),
 # 	cov.linear_kernel(315.46),
