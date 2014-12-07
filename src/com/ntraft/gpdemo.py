@@ -43,15 +43,27 @@ axis = [-20, 35, -10, 25]
 # kernel = cov.linear_kernel(-2.87701)
 # xkernel = cov.summed_kernel(cov.sq_exp_kernel(2.5, 1), cov.noise_kernel(0.01))
 # ykernel = cov.summed_kernel(cov.sq_exp_kernel(2.5, 1), cov.noise_kernel(0.01))
+# Custom Hyperparams
+# xkernel = cov.summed_kernel(
+# 	cov.matern_kernel(33.542, 47517),
+# 	cov.linear_kernel(315.46),
+# 	cov.noise_kernel(0.53043)
+# )
+# ykernel = cov.summed_kernel(
+# 	cov.matern_kernel(9.8147, 155.36),
+# 	cov.linear_kernel(17299),
+# 	cov.noise_kernel(0.61790)
+# )
+# Cafeteria Hyperparams
 xkernel = cov.summed_kernel(
-	cov.matern_kernel(33.542, 47517),
-	cov.linear_kernel(315.46),
-	cov.noise_kernel(0.53043)
+	cov.matern_kernel(np.exp(3.5128), np.exp(2*5.3844)),
+	cov.linear_kernel(np.exp(-2*-2.8770)),
+	cov.noise_kernel(np.exp(2*-0.3170))
 )
 ykernel = cov.summed_kernel(
-	cov.matern_kernel(9.8147, 155.36),
-	cov.linear_kernel(17299),
-	cov.noise_kernel(0.61790)
+	cov.matern_kernel(np.exp(2.2839), np.exp(2*2.5229)),
+	cov.linear_kernel(np.exp(-2*-4.8792)),
+	cov.noise_kernel(np.exp(2*-0.2407))
 )
 xgp = GaussianProcess(T, x, Ttest, xkernel)
 ygp = GaussianProcess(T, y, Ttest, ykernel)
