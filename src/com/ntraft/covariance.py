@@ -47,6 +47,7 @@ def noise(a, b, kind, sigma2=0):
 	elif kind == 'test':
 		return sigma2
 	else:
+# 		return sigma2
 		return 0
 
 ################################################################################

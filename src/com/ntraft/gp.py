@@ -16,21 +16,25 @@ class GaussianProcess:
 	def __init__(self, zx, zy, testpoints, kernel=cov.sq_exp_kernel()):
 		''' Creates a new Gaussian process from the given observations. '''
 		self.timepoints = testpoints
+		self.kernel = kernel
 		
 		# covariance of observations
-		K = kernel(zx, zx, 'train')
-		K += 1e-9*np.eye(K.shape[0])
-		L = np.linalg.cholesky(K)
+		self.K = kernel(zx, zx, 'train')
+		self.K += 1e-9*np.eye(self.K.shape[0])
+		Ltrain = np.linalg.cholesky(self.K)
 		
-		# compute the mean at our test points
-		v = np.linalg.solve(L, kernel(zx, testpoints, 'cross'))
-		self.mu = np.dot(v.T, np.linalg.solve(L, zy))
+		# compute the predictive mean at our test points
+		self.Kstar = kernel(zx, testpoints, 'cross')
+		v = np.linalg.solve(Ltrain, self.Kstar)
+		self.mu = np.dot(v.T, np.linalg.solve(Ltrain, zy))
 		
-		# compute the variance at our test points
-		Kss = kernel(testpoints, testpoints, 'test')
-		Kss += 1e-9*np.eye(Kss.shape[0])
-		self.prior_L = np.linalg.cholesky(Kss)
-		self.L = np.linalg.cholesky(Kss - np.dot(v.T, v))
+		# compute the predictive variance at our test points
+		self.Kss = kernel(testpoints, testpoints, 'test')
+		self.Kss += 1e-9*np.eye(self.Kss.shape[0])
+		self.prior_L = np.linalg.cholesky(self.Kss)
+		
+		self.Kss = self.kernel(testpoints, testpoints, 'train')
+		self.L = np.linalg.cholesky(self.Kss - np.dot(v.T, v))
 	
 	def sample(self, n=1):
 		'''
