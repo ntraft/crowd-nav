@@ -125,7 +125,6 @@ class Display:
 			for ddex in peds_to_draw:
 				# The GP samples.
 				if self.draw_samples != NO_SAMPLES:
-					draw_waypoints(frame, self.predictions.past[ddex], (255,211,176))
 					preds = self.predictions.prior if self.draw_samples == PRIOR_SAMPLES else self.predictions.posterior
 					for i in range(util.NUM_SAMPLES):
 						path = preds[ddex][:,i,:]
