@@ -65,8 +65,8 @@ def to_image_frame(Hinv, loc):
 	loc = np.dot(Hinv, loc) # to camera frame
 	return loc/loc[2] # to pixels (from millimeters)
 
-Predictions = namedtuple('Predictions', ['past', 'true_paths', 'prior', 'posterior', 'plan'])
-empty_predictions = Predictions([],[],[],[],[])
+Predictions = namedtuple('Predictions', ['past', 'true_paths', 'prior', 'posterior', 'weights', 'plan'])
+empty_predictions = Predictions([],[],[],[],[],[])
 
 @timeit
 def make_predictions(t, timesteps, agents, robot=-1, past_plan=None):
@@ -91,8 +91,11 @@ def make_predictions(t, timesteps, agents, robot=-1, past_plan=None):
 	
 	# Perform importance sampling and get the maximum a-posteriori path.
 	weights = interaction(prior)
+	sortdex = np.argsort(-weights)
+	weights = weights[sortdex]
+	prior = [p[:,sortdex,:] for p in prior]
 	posterior, plan = compute_expectation(prior, weights)
-	return Predictions(past_paths, true_paths, prior, posterior, plan)
+	return Predictions(past_paths, true_paths, prior, posterior, weights, plan)
 
 def get_path_at_time(t, fullpath):
 	path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==t)
@@ -114,7 +117,7 @@ def interaction(allpriors):
 	"""
 	The Interaction Potential, denoted as 'psi' in Trautman & Krause, 2010.
 	"""
-	# Input has shape: (agent, time, samples, x/y)
+	# Input has shape: [agent](time, samples, x/y)
 	weights = np.ones(NUM_SAMPLES)
 	for i in range(NUM_SAMPLES):
 		num_agents = len(allpriors)
@@ -137,7 +140,7 @@ def interaction(allpriors):
 	return weights
 
 def compute_MAP(prior, weights):
-	# It's not really plan. More like expected value of a biased posterior.
+	# It's not really MAP. More like expected value of a biased posterior.
 	posterior = resample(prior, weights)
 	w = np.ones_like(weights) / len(weights)
 	return (posterior, [weighted_mean(p, w) for p in posterior])

@@ -72,13 +72,16 @@ def main():
 		elif key == LEFT:
 			disp.back_one_frame()
 		elif key == UP:
-			disp.agent_num += 1
+			if disp.draw_all_agents: disp.sample_num += 1
+			else: disp.agent_num += 1
 			disp.reset_frame()
 		elif key == DOWN:
-			disp.agent_num -= 1
+			if disp.draw_all_agents: disp.sample_num -= 1
+			else: disp.agent_num -= 1
 			disp.reset_frame()
 		elif key == ord('a'):
 			disp.draw_all_agents = not disp.draw_all_agents
+			disp.draw_all_samples = not disp.draw_all_samples
 			disp.reset_frame()
 		elif key == ord('t'):
 			disp.draw_truth = not disp.draw_truth

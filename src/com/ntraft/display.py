@@ -43,9 +43,11 @@ class Display:
 		self.destinations = destinations
 		self.predictions = util.empty_predictions
 		self.agent_num = 0
+		self.sample_num = 0
 		self.agent_txt = ''
 		self.last_t = -1
 		self.draw_all_agents = False
+		self.draw_all_samples = True
 		self.draw_samples = NO_SAMPLES
 		self.draw_truth = True
 		self.draw_past = True
@@ -78,6 +80,7 @@ class Display:
 		# Check for end of annotations.
 		if frame_num >= len(self.frames):
 			frame_txt += ' (eof)'
+			self.agent_txt = ''
 		else:
 			frame_txt += ' (' + str(frame_num) + ')'
 			# If we've reached a new timestep, recompute the observations.
@@ -106,27 +109,37 @@ class Display:
 			d = np.append(d, 1)
 			cv2.circle(frame, util.to_pixels(self.Hinv, d), 5, (0,255,0), -1)
 	
-		# Inform of the frame number.
+		# Inform of frame and agent number.
 		pt = (3, frame.shape[0]-3)
 		ll, ur = draw_text(frame, pt, frame_txt)
 		if self.agent_txt:
 			pt = (ll[0], ur[1])
-			draw_text(frame, pt, self.agent_txt)
+			ll, ur = draw_text(frame, pt, self.agent_txt)
 		
 		# Draw in the pedestrians, if we have them.
 		if self.predictions.past:
+			# What sample are we showing?
+			if self.draw_all_samples:
+				samples_to_draw = range(util.NUM_SAMPLES)
+			else:
+				sdex = self.sample_num % util.NUM_SAMPLES
+				if sdex < 0: sdex = util.NUM_SAMPLES + sdex
+				samples_to_draw = [sdex]
+				pt = (ll[0], ur[1])
+				draw_text(frame, pt, 'Sample: {}'.format(sdex+1))
+			
 			# The paths they've already taken.
 			if self.draw_past:
 				for path in self.predictions.past:
 					draw_path(frame, path, (192,192,192))
 			
-			peds_to_draw = range(0, len(self.predictions.plan)) if self.draw_all_agents else [adex]
+			peds_to_draw = range(len(self.predictions.plan)) if self.draw_all_agents else [adex]
 			# For each agent, draw...
 			for ddex in peds_to_draw:
 				# The GP samples.
 				if self.draw_samples != NO_SAMPLES:
 					preds = self.predictions.prior if self.draw_samples == PRIOR_SAMPLES else self.predictions.posterior
-					for i in range(util.NUM_SAMPLES):
+					for i in samples_to_draw:
 						path = preds[ddex][:,i,:]
 						path = np.column_stack((path, np.ones(path.shape[0])))
 						draw_path(frame, path, (255,0,0))
