@@ -91,7 +91,7 @@ def make_predictions(t, timesteps, agents, robot=-1, past_plan=None):
 	
 	# Perform importance sampling and get the maximum a-posteriori path.
 	weights = interaction(prior)
-	posterior, MAP = compute_weighted_mean(prior, weights)
+	posterior, MAP = compute_expectation(prior, weights)
 	return Predictions(past_paths, true_paths, prior, posterior, MAP)
 
 def get_path_at_time(t, fullpath):
@@ -137,11 +137,12 @@ def interaction(allpriors):
 	return weights
 
 def compute_MAP(prior, weights):
+	# It's not really MAP. More like expected value of a biased posterior.
 	posterior = resample(prior, weights)
 	w = np.ones_like(weights) / len(weights)
 	return (posterior, [weighted_mean(p, w) for p in posterior])
 
-def compute_weighted_mean(prior, weights):
+def compute_expectation(prior, weights):
 	return (prior, [weighted_mean(p, weights) for p in prior])
 
 def resample(allpriors, weights):
