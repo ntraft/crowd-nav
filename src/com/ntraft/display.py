@@ -13,6 +13,11 @@ import com.ntraft.util as util
 POS_MSEC = cv2.cv.CV_CAP_PROP_POS_MSEC
 POS_FRAMES = cv2.cv.CV_CAP_PROP_POS_FRAMES
 
+NO_SAMPLES = 0
+PRIOR_SAMPLES = 1
+POSTERIOR_SAMPLES = 2
+SAMPLE_CHOICES = 3
+
 '''
 TODO
 
@@ -38,7 +43,8 @@ class Display:
 		self.agent_num = 0
 		self.agent_txt = ''
 		self.last_t = -1
-		self.drawing_choice = 0
+		self.draw_all_agents = False
+		self.draw_samples = NO_SAMPLES
 	
 	def set_frame(self, frame):
 		self.cap.set(POS_FRAMES, frame)
@@ -108,23 +114,27 @@ class Display:
 			for path in self.predictions.past:
 				draw_path(frame, path, (192,192,192))
 			
-			# The ground truth for a single agent.
-			draw_path(frame, self.predictions.true_paths[adex], (0,255,0))
-			
-			# The predictions for a single agent.
-			if self.drawing_choice == 1 or self.drawing_choice == 2:
-				draw_waypoints(frame, self.predictions.past[adex], (255,211,176))
-				preds = self.predictions.prior if self.drawing_choice == 1 else self.predictions.posterior
-				for i in range(util.NUM_SAMPLES):
-					path = preds[adex][:,i,:]
-					path = np.column_stack((path, np.ones(path.shape[0])))
-					draw_path(frame, path, (255,0,0))
-			else: # just the planned path
-				draw_path(frame, self.predictions.MAP[adex], (0,192,192))
+			peds_to_draw = range(0, len(self.predictions.MAP)) if self.draw_all_agents else [adex]
+			# For each agent, draw...
+			for ddex in peds_to_draw:
+				# The GP samples.
+				if self.draw_samples == PRIOR_SAMPLES or self.draw_samples == POSTERIOR_SAMPLES:
+					draw_waypoints(frame, self.predictions.past[ddex], (255,211,176))
+					preds = self.predictions.prior if self.draw_samples == PRIOR_SAMPLES else self.predictions.posterior
+					for i in range(util.NUM_SAMPLES):
+						path = preds[ddex][:,i,:]
+						path = np.column_stack((path, np.ones(path.shape[0])))
+						draw_path(frame, path, (255,0,0))
+				
+				# The ground truth.
+				draw_path(frame, self.predictions.true_paths[ddex], (0,255,0))
+				
+				# The final prediction.
+				draw_path(frame, self.predictions.MAP[ddex], (0,192,192))
 				if past_plan is not None:
 					draw_waypoints(frame, past_plan, (0,192,192))
 				else:
-					draw_waypoints(frame, self.predictions.past[adex], (255,211,176))
+					draw_waypoints(frame, self.predictions.past[ddex], (255,211,176))
 		
 		cv2.imshow('frame', frame)
 		return t_plus_one

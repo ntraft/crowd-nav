@@ -77,8 +77,11 @@ def main():
 		elif key == DOWN:
 			disp.agent_num -= 1
 			disp.reset_frame()
+		elif key == ord('a'):
+			disp.draw_all_agents = not disp.draw_all_agents
+			disp.reset_frame()
 		elif key == ord('s'):
-			disp.drawing_choice = (disp.drawing_choice + 1) % 3
+			disp.draw_samples = (disp.draw_samples + 1) % display.SAMPLE_CHOICES
 			disp.reset_frame()
 	
 	cap.release()
