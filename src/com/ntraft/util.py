@@ -14,7 +14,7 @@ from com.ntraft.gp import ParametricGaussianProcess
 import com.ntraft.covariance as cov
 from collections import namedtuple
 
-NUM_SAMPLES = 100	# number of particles
+NUM_SAMPLES = 500	# number of particles
 ALPHA = 1.0			# repelling force
 H = 15				# safety distance
 

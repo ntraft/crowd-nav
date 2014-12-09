@@ -126,7 +126,9 @@ class Display:
 				if sdex < 0: sdex = util.NUM_SAMPLES + sdex
 				samples_to_draw = [sdex]
 				pt = (ll[0], ur[1])
-				draw_text(frame, pt, 'Sample: {}'.format(sdex+1))
+				ll, ur = draw_text(frame, pt, 'Sample: {}'.format(sdex+1))
+				pt = (ll[0], ur[1])
+				draw_text(frame, pt, 'Weight: {:.1e}'.format(self.predictions.weights[sdex]))
 			
 			# The paths they've already taken.
 			if self.draw_past:
