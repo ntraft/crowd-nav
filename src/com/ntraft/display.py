@@ -92,10 +92,10 @@ class Display:
 				if t >= 0 and t != self.last_t:
 					self.last_t = t
 					self.predictions = util.make_predictions(t, self.timesteps, self.agents, agent, past_plan)
-					if self.predictions.MAP[adex].shape[0] > 1:
-						t_plus_one = self.predictions.MAP[adex][1]
+					if self.predictions.plan[adex].shape[0] > 1:
+						t_plus_one = self.predictions.plan[adex][1]
 					if with_scores:
-						ped_scores, IGP_scores = util.calc_scores(self.predictions.true_paths, self.predictions.MAP)
+						ped_scores, IGP_scores = util.calc_scores(self.predictions.true_paths, self.predictions.plan)
 						update_plot(ped_scores, IGP_scores)
 		
 		# Draw the obstacles.
@@ -120,7 +120,7 @@ class Display:
 				for path in self.predictions.past:
 					draw_path(frame, path, (192,192,192))
 			
-			peds_to_draw = range(0, len(self.predictions.MAP)) if self.draw_all_agents else [adex]
+			peds_to_draw = range(0, len(self.predictions.plan)) if self.draw_all_agents else [adex]
 			# For each agent, draw...
 			for ddex in peds_to_draw:
 				# The GP samples.
@@ -139,7 +139,7 @@ class Display:
 			for ddex in peds_to_draw:
 				# The final prediction.
 				if self.draw_plan:
-					draw_path(frame, self.predictions.MAP[ddex], (0,192,192))
+					draw_path(frame, self.predictions.plan[ddex], (0,192,192))
 					if not self.draw_all_agents: # past for all agents already drawn
 						if past_plan is not None:
 							draw_waypoints(frame, past_plan, (0,192,192))

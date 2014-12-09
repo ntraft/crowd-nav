@@ -65,7 +65,7 @@ def to_image_frame(Hinv, loc):
 	loc = np.dot(Hinv, loc) # to camera frame
 	return loc/loc[2] # to pixels (from millimeters)
 
-Predictions = namedtuple('Predictions', ['past', 'true_paths', 'prior', 'posterior', 'MAP'])
+Predictions = namedtuple('Predictions', ['past', 'true_paths', 'prior', 'posterior', 'plan'])
 empty_predictions = Predictions([],[],[],[],[])
 
 @timeit
@@ -91,8 +91,8 @@ def make_predictions(t, timesteps, agents, robot=-1, past_plan=None):
 	
 	# Perform importance sampling and get the maximum a-posteriori path.
 	weights = interaction(prior)
-	posterior, MAP = compute_expectation(prior, weights)
-	return Predictions(past_paths, true_paths, prior, posterior, MAP)
+	posterior, plan = compute_expectation(prior, weights)
+	return Predictions(past_paths, true_paths, prior, posterior, plan)
 
 def get_path_at_time(t, fullpath):
 	path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==t)
@@ -137,7 +137,7 @@ def interaction(allpriors):
 	return weights
 
 def compute_MAP(prior, weights):
-	# It's not really MAP. More like expected value of a biased posterior.
+	# It's not really plan. More like expected value of a biased posterior.
 	posterior = resample(prior, weights)
 	w = np.ones_like(weights) / len(weights)
 	return (posterior, [weighted_mean(p, w) for p in posterior])
@@ -188,7 +188,7 @@ def calc_score(path, other_paths):
 					safety = d
 	return (length, safety)
 
-def calc_scores(true_paths, MAP):
-	robot_scores = np.array([calc_score(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(MAP)])
+def calc_scores(true_paths, plan):
+	robot_scores = np.array([calc_score(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(plan)])
 	ped_scores = np.array([calc_score(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(true_paths)])
 	return ped_scores, robot_scores
