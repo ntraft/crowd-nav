@@ -22,7 +22,9 @@ SAMPLE_CHOICES = 3
 TODO
 
 - New problem: cannot assume the robot will take the same time to arrive at
-	the goal!
+	the goal! Can we make sure the robot travels at the correct velocity?
+	- Probably not, this is a problem that arises from having the GP be
+		time-dependent rather than previous-state-dependent.
 - Re-run experiment after fixing the above bugs.
 - May still need to play with the interaction potential.
 	- Check files Pete sent to see if his parameters are in there.
@@ -45,6 +47,9 @@ class Display:
 		self.last_t = -1
 		self.draw_all_agents = False
 		self.draw_samples = NO_SAMPLES
+		self.draw_truth = True
+		self.draw_past = True
+		self.draw_plan = True
 	
 	def set_frame(self, frame):
 		self.cap.set(POS_FRAMES, frame)
@@ -111,30 +116,36 @@ class Display:
 		# Draw in the pedestrians, if we have them.
 		if self.predictions.past:
 			# The paths they've already taken.
-			for path in self.predictions.past:
-				draw_path(frame, path, (192,192,192))
+			if self.draw_past:
+				for path in self.predictions.past:
+					draw_path(frame, path, (192,192,192))
 			
 			peds_to_draw = range(0, len(self.predictions.MAP)) if self.draw_all_agents else [adex]
 			# For each agent, draw...
 			for ddex in peds_to_draw:
 				# The GP samples.
-				if self.draw_samples == PRIOR_SAMPLES or self.draw_samples == POSTERIOR_SAMPLES:
+				if self.draw_samples != NO_SAMPLES:
 					draw_waypoints(frame, self.predictions.past[ddex], (255,211,176))
 					preds = self.predictions.prior if self.draw_samples == PRIOR_SAMPLES else self.predictions.posterior
 					for i in range(util.NUM_SAMPLES):
 						path = preds[ddex][:,i,:]
 						path = np.column_stack((path, np.ones(path.shape[0])))
 						draw_path(frame, path, (255,0,0))
-				
+						
+			for ddex in peds_to_draw:
 				# The ground truth.
-				draw_path(frame, self.predictions.true_paths[ddex], (0,255,0))
+				if self.draw_truth:
+					draw_path(frame, self.predictions.true_paths[ddex], (0,255,0))
 				
+			for ddex in peds_to_draw:
 				# The final prediction.
-				draw_path(frame, self.predictions.MAP[ddex], (0,192,192))
-				if past_plan is not None:
-					draw_waypoints(frame, past_plan, (0,192,192))
-				else:
-					draw_waypoints(frame, self.predictions.past[ddex], (255,211,176))
+				if self.draw_plan:
+					draw_path(frame, self.predictions.MAP[ddex], (0,192,192))
+					if not self.draw_all_agents: # past for all agents already drawn
+						if past_plan is not None:
+							draw_waypoints(frame, past_plan, (0,192,192))
+						else:
+							draw_waypoints(frame, self.predictions.past[ddex], (255,211,176))
 		
 		cv2.imshow('frame', frame)
 		return t_plus_one

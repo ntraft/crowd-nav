@@ -80,6 +80,15 @@ def main():
 		elif key == ord('a'):
 			disp.draw_all_agents = not disp.draw_all_agents
 			disp.reset_frame()
+		elif key == ord('t'):
+			disp.draw_truth = not disp.draw_truth
+			disp.reset_frame()
+		elif key == ord('f'):
+			disp.draw_plan = not disp.draw_plan
+			disp.reset_frame()
+		elif key == ord('p'):
+			disp.draw_past = not disp.draw_past
+			disp.reset_frame()
 		elif key == ord('s'):
 			disp.draw_samples = (disp.draw_samples + 1) % display.SAMPLE_CHOICES
 			disp.reset_frame()
