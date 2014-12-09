@@ -14,7 +14,7 @@ from com.ntraft.gp import ParametricGaussianProcess
 import com.ntraft.covariance as cov
 from collections import namedtuple
 
-NUM_SAMPLES = 1000	# number of particles
+NUM_SAMPLES = 100	# number of particles
 OBS_NOISE = 0.00005	# noise variance
 ALPHA = 1.0			# repelling force
 H = 15				# safety distance
@@ -92,8 +92,7 @@ def make_predictions(t, timesteps, agents, robot=-1, past_plan=None):
 	
 	# Perform importance sampling and get the maximum a-posteriori path.
 	weights = interaction(prior)
-	posterior = resample(prior, weights)
-	MAP = [get_final_path(p) for p in posterior]
+	posterior, MAP = compute_weighted_mean(prior, weights)
 	return Predictions(past_paths, true_paths, prior, posterior, MAP)
 
 def get_path_at_time(t, fullpath):
@@ -138,6 +137,14 @@ def interaction(allpriors):
 	weights /= total
 	return weights
 
+def compute_MAP(prior, weights):
+	posterior = resample(prior, weights)
+	w = np.ones_like(weights) / len(weights)
+	return (posterior, [weighted_mean(p, w) for p in posterior])
+
+def compute_weighted_mean(prior, weights):
+	return (prior, [weighted_mean(p, weights) for p in prior])
+
 def resample(allpriors, weights):
 	"""
 	Performs importance sampling over the prior distribution in order to
@@ -159,8 +166,11 @@ def resample(allpriors, weights):
 			allposteriors[agent][:,i,:] = allpriors[agent][:,windex,:]
 	return allposteriors
 
-def get_final_path(samples):
-	return np.column_stack((np.mean(samples, 1), np.ones(samples.shape[0])))
+def weighted_mean(samples, weights):
+	xmean = np.dot(samples[:,:,0], weights)
+	ymean = np.dot(samples[:,:,1], weights)
+	z = np.ones(samples.shape[0])
+	return np.column_stack((xmean, ymean, z))
 
 def calc_score(path, other_paths):
 	length = 0
