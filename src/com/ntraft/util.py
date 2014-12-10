@@ -16,7 +16,7 @@ from collections import namedtuple
 
 NUM_SAMPLES = 500	# number of particles
 ALPHA = 1.0			# repelling force
-H = 15				# safety distance
+H = 30				# safety distance
 
 # The all-important kernels and their hyperparameters.
 xkernel = cov.summed_kernel(

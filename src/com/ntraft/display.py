@@ -118,42 +118,45 @@ class Display:
 		
 		# Draw in the pedestrians, if we have them.
 		if self.predictions.past:
-			# What sample are we showing?
-			if self.draw_all_samples:
-				samples_to_draw = range(util.NUM_SAMPLES)
-			else:
-				sdex = self.sample_num % util.NUM_SAMPLES
-				if sdex < 0: sdex = util.NUM_SAMPLES + sdex
-				samples_to_draw = [sdex]
-				pt = (ll[0], ur[1])
-				ll, ur = draw_text(frame, pt, 'Sample: {}'.format(sdex+1))
-				pt = (ll[0], ur[1])
-				draw_text(frame, pt, 'Weight: {:.1e}'.format(self.predictions.weights[sdex]))
 			
 			# The paths they've already taken.
 			if self.draw_past:
 				for path in self.predictions.past:
 					draw_path(frame, path, (192,192,192))
 			
-			peds_to_draw = range(len(self.predictions.plan)) if self.draw_all_agents else [adex]
 			# For each agent, draw...
-			for ddex in peds_to_draw:
-				# The GP samples.
-				if self.draw_samples != NO_SAMPLES:
-					preds = self.predictions.prior if self.draw_samples == PRIOR_SAMPLES else self.predictions.posterior
+			peds_to_draw = range(len(self.predictions.plan)) if self.draw_all_agents else [adex]
+			
+			# The GP samples.
+			if self.draw_samples != NO_SAMPLES:
+				# What sample are we showing?
+				if self.draw_all_samples:
+					samples_to_draw = range(util.NUM_SAMPLES)
+				else:
+					sdex = self.sample_num % util.NUM_SAMPLES
+					if sdex < 0: sdex = util.NUM_SAMPLES + sdex
+					samples_to_draw = [sdex]
+					pt = (ll[0], ur[1])
+					ll, ur = draw_text(frame, pt, 'Sample: {}'.format(sdex+1))
+					pt = (ll[0], ur[1])
+					draw_text(frame, pt, 'Weight: {:.1e}'.format(self.predictions.weights[sdex]))
+				# What kind of sample are we showing?
+				preds = self.predictions.prior if self.draw_samples == PRIOR_SAMPLES else self.predictions.posterior
+				# Now actually draw the sample.
+				for ddex in peds_to_draw:
 					for i in samples_to_draw:
 						path = preds[ddex][:,i,:]
 						path = np.column_stack((path, np.ones(path.shape[0])))
 						draw_path(frame, path, (255,0,0))
 						
-			for ddex in peds_to_draw:
-				# The ground truth.
-				if self.draw_truth:
+			# The ground truth.
+			if self.draw_truth:
+				for ddex in peds_to_draw:
 					draw_path(frame, self.predictions.true_paths[ddex], (0,255,0))
 				
-			for ddex in peds_to_draw:
-				# The final prediction.
-				if self.draw_plan:
+			# The final prediction.
+			if self.draw_plan:
+				for ddex in peds_to_draw:
 					draw_path(frame, self.predictions.plan[ddex], (0,192,192))
 					if not self.draw_all_agents: # past for all agents already drawn
 						if past_plan is not None:
