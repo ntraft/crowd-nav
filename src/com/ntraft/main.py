@@ -65,10 +65,12 @@ def main():
 		disp.do_frame()
 		
 		key = cv2.waitKey(0) & 0xFF
-		if key == ord('r'):
+		if key == ord('e'):
 			run_experiment(cap, disp, timeframes, timesteps, agents)
 		elif key == ord('q') or key == ESC:
 			break
+		elif key == ord('r'):
+			disp.redo_prediction()
 		elif key == LEFT:
 			disp.back_one_frame()
 		elif key == UP:

@@ -56,13 +56,17 @@ class Display:
 	def set_frame(self, frame):
 		self.cap.set(POS_FRAMES, frame)
 
+	def back_one_frame(self):
+		frame_num = int(self.cap.get(POS_FRAMES))
+		self.set_frame(frame_num-2)
+
 	def reset_frame(self):
 		frame_num = int(self.cap.get(POS_FRAMES))
 		self.set_frame(frame_num-1)
 
-	def back_one_frame(self):
-		frame_num = int(self.cap.get(POS_FRAMES))
-		self.set_frame(frame_num-2)
+	def redo_prediction(self):
+		self.last_t = -1
+		self.reset_frame()
 
 	def do_frame(self, agent=-1, past_plan=None, with_scores=True):
 		if not self.cap.isOpened():
@@ -92,7 +96,7 @@ class Display:
 					adex = self.agent_num % len(self.timesteps[t])
 				displayed_agent = self.timesteps[t][adex]
 				self.agent_txt = 'Agent: {}'.format(displayed_agent)
-				if t >= 0 and t != self.last_t:
+				if t != self.last_t:
 					self.last_t = t
 					self.predictions = util.make_predictions(t, self.timesteps, self.agents, agent, past_plan)
 					if self.predictions.plan[adex].shape[0] > 1:
