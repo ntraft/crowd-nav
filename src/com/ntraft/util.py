@@ -193,12 +193,12 @@ def length_and_safety(path, other_paths):
 
 def prediction_errors(truth, plan):
 	# Compare point-to-point at each time t.
-	return np.linalg.norm(plan - truth, axis=1)
+# 	return np.linalg.norm(plan - truth, axis=1)
 	# Compare to point on closest path, if we only care about path shape and
 	# not velocity. (This is most certainly cheating.)
 	# Another measure would be the CLEAR MOT metrics: % correct points within
 	# a given radius.
-# 	return np.array([np.linalg.norm(plan[t] - truth[t]) for t in range(len(truth))])
+	return np.array([np.min(np.linalg.norm(plan[t] - truth, axis=1)) for t in range(len(plan))])
 
 def calc_nav_scores(true_paths, plan):
 	robot_scores = np.array([length_and_safety(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(plan)])
