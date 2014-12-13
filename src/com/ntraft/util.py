@@ -16,7 +16,7 @@ from collections import namedtuple
 
 NUM_SAMPLES = 500	# number of particles
 ALPHA = 1.0			# repelling force
-H = 30				# safety distance
+H = 11				# safety distance
 
 # The all-important kernels and their hyperparameters.
 xkernel = cov.summed_kernel(
@@ -175,7 +175,7 @@ def weighted_mean(samples, weights):
 	z = np.ones(samples.shape[0])
 	return np.column_stack((xmean, ymean, z))
 
-def calc_score(path, other_paths):
+def length_and_safety(path, other_paths):
 	length = 0
 	safety = inf
 	prev_loc = None
@@ -191,7 +191,19 @@ def calc_score(path, other_paths):
 					safety = d
 	return (length, safety)
 
-def calc_scores(true_paths, plan):
-	robot_scores = np.array([calc_score(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(plan)])
-	ped_scores = np.array([calc_score(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(true_paths)])
+def prediction_errors(truth, plan):
+	return np.array([np.linalg.norm(plan[t] - truth[t]) for t in range(len(truth))])
+
+def calc_nav_scores(true_paths, plan):
+	robot_scores = np.array([length_and_safety(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(plan)])
+	ped_scores = np.array([length_and_safety(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(true_paths)])
 	return ped_scores, robot_scores
+
+def calc_pred_scores(true_paths, planned_paths):
+	# TODO find the closest point on the true path and compare to that instead.
+	num_peds = len(planned_paths)
+	scores = [np.empty(0)]*num_peds
+	for i in range(num_peds):
+		scores[i] = prediction_errors(true_paths[i], planned_paths[i])
+	return scores
+

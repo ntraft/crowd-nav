@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as pl
 
 import com.ntraft.util as util
+from matplotlib.pyplot import legend
 
 POS_MSEC = cv2.cv.CV_CAP_PROP_POS_MSEC
 POS_FRAMES = cv2.cv.CV_CAP_PROP_POS_FRAMES
@@ -102,8 +103,9 @@ class Display:
 					if self.predictions.plan[adex].shape[0] > 1:
 						t_plus_one = self.predictions.plan[adex][1]
 					if with_scores:
-						ped_scores, IGP_scores = util.calc_scores(self.predictions.true_paths, self.predictions.plan)
-						update_plot(ped_scores, IGP_scores)
+						ped_scores, IGP_scores = util.calc_nav_scores(self.predictions.true_paths, self.predictions.plan)
+						pred_errs = util.calc_pred_scores(self.predictions.true_paths, self.predictions.plan)
+						update_plot(ped_scores, IGP_scores, pred_errs, self.timesteps[t])
 		
 		# Draw the obstacles.
 		frame = np.maximum(frame, cv2.cvtColor(self.obs_map, cv2.COLOR_GRAY2BGR))
@@ -171,16 +173,25 @@ class Display:
 		cv2.imshow('frame', frame)
 		return t_plus_one
 
-def update_plot(ped_scores, IGP_scores):
+def update_plot(ped_scores, IGP_scores, prediction_errors, agents):
+	pl.figure(1, (10,10))
 	pl.clf()
 	if len(ped_scores) > 0:
-		pl.subplot(1,2,1)
-		pl.title('Path Length')
+		pl.subplot(2,1,1)
+		pl.title('Prediction Error')
+		pl.xlabel('Time (frames)'); pl.ylabel('Error (px)')
+		times = np.array([range(len(err)) for err in prediction_errors])
+# 		pl.plot(times, prediction_errors)
+		for i in range(len(times)):
+			pl.plot(times[i], prediction_errors[i], label='{}'.format(agents[i]))
+		pl.legend()
+		pl.subplot(2,2,3)
+		pl.title('Path Length (px)')
 		pl.xlabel('IGP'); pl.ylabel('Pedestrian')
 		pl.scatter(IGP_scores[:,0], ped_scores[:,0])
 		plot_diag()
-		pl.subplot(1,2,2)
-		pl.title('Minimum Safety')
+		pl.subplot(2,2,4)
+		pl.title('Minimum Safety (px)')
 		pl.xlabel('IGP'); pl.ylabel('Pedestrian')
 		pl.scatter(IGP_scores[:,1], ped_scores[:,1])
 		plot_diag()

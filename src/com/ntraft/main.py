@@ -56,9 +56,9 @@ def main():
 # 	seekpos = 7.5 * 60 * 1000 # About 7 mins 30 secs
 # 	endpos = 8.7 * 60 * 1000 # About 8 mins 40 secs
 # 	cap.set(POS_MSEC, seekpos)
-		
+	
 	pl.ion()
-	display.update_plot([], [])
+	display.update_plot([], [], [], [])
 	
 	while cap.isOpened():
 		
@@ -109,7 +109,8 @@ def run_experiment(cap, disp, timeframes, timesteps, agents):
 	agents_to_test = range(319, 331)
 	IGP_scores = np.zeros((len(agents_to_test), 2))
 	ped_scores = np.zeros((len(agents_to_test), 2))
-	display.update_plot(ped_scores, IGP_scores)
+	pred_errs = np.zeros((len(agents_to_test), 2))
+	display.update_plot(ped_scores, IGP_scores, pred_errs, agents_to_test)
 	for i, agent in enumerate(agents_to_test):
 		ped_path = agents[agent]
 		path_length = ped_path.shape[0]
@@ -129,9 +130,10 @@ def run_experiment(cap, disp, timeframes, timesteps, agents):
 		start_time = int(ped_path[0,0])
 		other_peds = [agents[a] for a in timesteps[start_time] if a != agent]
 		other_paths = [util.get_path_at_time(start_time, fullpath)[1][:,1:4] for fullpath in other_peds]
-		IGP_scores[i] = util.calc_score(final_path, other_paths)
-		ped_scores[i] = util.calc_score(ped_path[:,1:4], other_paths)
-		display.update_plot(ped_scores, IGP_scores)
+		IGP_scores[i] = util.length_and_safety(final_path, other_paths)
+		ped_scores[i] = util.length_and_safety(ped_path[:,1:4], other_paths)
+		pred_errs[i] = util.prediction_errors(ped_path[:,1:4], final_path)
+		display.update_plot(ped_scores, IGP_scores, pred_errs, agents_to_test)
 	results = np.column_stack((agents_to_test, ped_scores, IGP_scores))
 	np.savetxt('experiment.txt', results)
 	print 'EXPERIMENT COMPLETE.'
