@@ -117,10 +117,11 @@ def run_experiment(cap, disp, timeframes, timesteps, agents):
 	for i, agent in enumerate(agents_to_test):
 		ped_path = agents[agent]
 		path_length = ped_path.shape[0]
+		start = 3 # Initializes path with start+1 points.
 		final_path = np.zeros((path_length, 3))
-		final_path[0] = ped_path[0,1:4]
-		# Run IGP through the whole path sequence.
-		for t in range(0, path_length-1):
+		final_path[0:start+1, :] = ped_path[0:start+1,1:4]
+		# Run IGP through the path sequence.
+		for t in range(start, path_length-1):
 			frame_num = timeframes[int(ped_path[t,0])]
 			print 'doing frame', frame_num
 			disp.set_frame(frame_num)
@@ -140,8 +141,12 @@ def run_experiment(cap, disp, timeframes, timesteps, agents):
 		pred_errs = util.calc_pred_scores(true_paths, planned_paths, util.prediction_errors)
 		path_errs = util.calc_pred_scores(true_paths, planned_paths, util.path_errors)
 		display.plot_prediction_metrics(pred_errs, path_errs, agents_to_test[0:i+1])
-	results = np.column_stack((agents_to_test, pred_errs, path_errs))
-	np.savetxt('experiment.txt', results)
+# 	results = np.column_stack((agents_to_test, ped_scores, IGP_scores))
+	pred_results = np.column_stack((agents_to_test, pred_errs.T))
+	path_results = np.column_stack((agents_to_test, path_errs.T))
+# 	np.savetxt('experiment.txt', results)
+	np.savetxt('prediction_errors.txt', pred_results)
+	np.savetxt('path_errors.txt', path_results)
 	print 'EXPERIMENT COMPLETE.'
 	util.report_time()
 

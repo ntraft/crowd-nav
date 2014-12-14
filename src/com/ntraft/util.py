@@ -19,27 +19,27 @@ ALPHA = 1.0			# repelling force
 H = 11				# safety distance
 
 # The all-important kernels and their hyperparameters.
-xkernel = cov.summed_kernel(
-	cov.matern_kernel(np.exp(3.5128), np.exp(2*5.3844)),
-	cov.linear_kernel(np.exp(-2*-2.8770)),
-	cov.noise_kernel(np.exp(2*-0.3170))
-)
-ykernel = cov.summed_kernel(
-	cov.matern_kernel(np.exp(2.2839), np.exp(2*2.5229)),
-	cov.linear_kernel(np.exp(-2*-4.8792)),
-	cov.noise_kernel(np.exp(2*-0.2407))
-)
-# Hyperparameters for seq_hotel.
 # xkernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(2.0257), np.exp(2*2.8614)),
-# 	cov.linear_kernel(np.exp(-2*-5.5200)),
-# 	cov.noise_kernel(np.exp(2*0.5135))
+# 	cov.matern_kernel(np.exp(3.5128), np.exp(2*5.3844)),
+# 	cov.linear_kernel(np.exp(-2*-2.8770)),
+# 	cov.noise_kernel(np.exp(2*-0.3170))
 # )
 # ykernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(2.0840), np.exp(2*2.3497)),
-# 	cov.linear_kernel(np.exp(-2*-6.1052)),
-# 	cov.noise_kernel(np.exp(2*-0.1758))
+# 	cov.matern_kernel(np.exp(2.2839), np.exp(2*2.5229)),
+# 	cov.linear_kernel(np.exp(-2*-4.8792)),
+# 	cov.noise_kernel(np.exp(2*-0.2407))
 # )
+# Hyperparameters for seq_hotel.
+xkernel = cov.summed_kernel(
+	cov.matern_kernel(np.exp(2.0257), np.exp(2*2.8614)),
+	cov.linear_kernel(np.exp(-2*-5.5200)),
+	cov.noise_kernel(np.exp(2*0.5135))
+)
+ykernel = cov.summed_kernel(
+	cov.matern_kernel(np.exp(2.0840), np.exp(2*2.3497)),
+	cov.linear_kernel(np.exp(-2*-6.1052)),
+	cov.noise_kernel(np.exp(2*-0.1758))
+)
 
 total_time = 0
 total_runs = 0
