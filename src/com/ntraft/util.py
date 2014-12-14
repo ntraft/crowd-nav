@@ -108,6 +108,15 @@ def make_predictions(t, timesteps, agents, robot=-1, past_plan=None):
 	posterior, plan = compute_expectation(prior, weights)
 	return Predictions(past_paths, true_paths, prior, posterior, weights, plan)
 
+def get_past_paths(t, timesteps, agents):
+	peds = timesteps[t]
+	past_paths = []
+	for ped in peds:
+		# Get the past and future paths of the agent.
+		past_plus_dest, _ = get_path_at_time(t, agents[ped])
+		past_paths.append(past_plus_dest[:-1,1:4].copy())
+	return Predictions(past_paths, [], [], [], [], [])
+
 def get_path_at_time(t, fullpath):
 	path_end = next(i for i,v in enumerate(fullpath[:,0]) if v==t)
 	points = list(range(0,path_end+1))

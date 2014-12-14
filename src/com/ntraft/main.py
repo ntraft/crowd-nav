@@ -52,9 +52,9 @@ def main():
 	seqname = os.path.basename(args.datadir)
 	cap = cv2.VideoCapture(os.path.join(args.datadir, seqname+".avi"))
 	disp = display.Display(cap, Hinv, obs_map, frames, timesteps, agents, destinations)
-	disp.set_frame(11301)
-# 	disp.set_frame(8289)
-# 	disp.set_frame(9261)
+# 	disp.set_frame(11301) # ETH sequence, big crowds both ways
+	disp.set_frame(8289) # ETH sequence, agent #175
+# 	disp.set_frame(9261) # Hotel sequence, agent #175
 # 	seekpos = 7.5 * 60 * 1000 # About 7 mins 30 secs
 # 	endpos = 8.7 * 60 * 1000 # About 8 mins 40 secs
 # 	cap.set(POS_MSEC, seekpos)
@@ -73,6 +73,8 @@ def main():
 			break
 		elif key == ord('r'):
 			disp.redo_prediction()
+		elif key == ord(' '):
+			disp.toggle_prediction()
 		elif key == LEFT:
 			disp.back_one_frame()
 		elif key == UP:

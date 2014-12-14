@@ -46,6 +46,7 @@ class Display:
 		self.sample_num = 0
 		self.agent_txt = ''
 		self.last_t = -1
+		self.do_predictions = True
 		self.draw_all_agents = False
 		self.draw_all_samples = True
 		self.draw_samples = NO_SAMPLES
@@ -67,6 +68,14 @@ class Display:
 	def redo_prediction(self):
 		self.last_t = -1
 		self.reset_frame()
+
+	def toggle_prediction(self):
+		self.do_predictions = not self.do_predictions
+		if self.do_predictions:
+			self.redo_prediction()
+		else:
+			self.predictions = util.empty_predictions
+			self.reset_frame()
 
 	def do_frame(self, agent=-1, past_plan=None, with_scores=True):
 		if not self.cap.isOpened():
@@ -98,15 +107,18 @@ class Display:
 				self.agent_txt = 'Agent: {}'.format(displayed_agent)
 				if t != self.last_t:
 					self.last_t = t
-					self.predictions = util.make_predictions(t, self.timesteps, self.agents, agent, past_plan)
-					if self.predictions.plan[adex].shape[0] > 1:
-						t_plus_one = self.predictions.plan[adex][1]
-					if with_scores:
-# 						ped_scores, IGP_scores = util.calc_nav_scores(self.predictions.true_paths, self.predictions.plan)
-# 						plot_nav_metrics(ped_scores, IGP_scores)
-						pred_errs = util.calc_pred_scores(self.predictions.true_paths, self.predictions.plan, util.prediction_errors)
-						path_errs = util.calc_pred_scores(self.predictions.true_paths, self.predictions.plan, util.path_errors)
-						plot_prediction_metrics(pred_errs, path_errs, self.timesteps[t])
+					if self.do_predictions:
+						self.predictions = util.make_predictions(t, self.timesteps, self.agents, agent, past_plan)
+						if self.predictions.plan[adex].shape[0] > 1:
+							t_plus_one = self.predictions.plan[adex][1]
+						if with_scores:
+	# 						ped_scores, IGP_scores = util.calc_nav_scores(self.predictions.true_paths, self.predictions.plan)
+	# 						plot_nav_metrics(ped_scores, IGP_scores)
+							pred_errs = util.calc_pred_scores(self.predictions.true_paths, self.predictions.plan, util.prediction_errors)
+							path_errs = util.calc_pred_scores(self.predictions.true_paths, self.predictions.plan, util.path_errors)
+							plot_prediction_metrics(pred_errs, path_errs, self.timesteps[t])
+					else:
+						self.predictions = util.get_past_paths(t, self.timesteps, self.agents)
 		
 		# Draw the obstacles.
 		frame = np.maximum(frame, cv2.cvtColor(self.obs_map, cv2.COLOR_GRAY2BGR))
@@ -123,14 +135,14 @@ class Display:
 			pt = (ll[0], ur[1])
 			ll, ur = draw_text(frame, pt, self.agent_txt)
 		
-		# Draw in the pedestrians, if we have them.
-		if self.predictions.past:
-			
-			# The paths they've already taken.
-			if self.draw_past:
-				for path in self.predictions.past:
-					draw_path(frame, path, (192,192,192))
-			
+		# Draw pedestrian paths so far.
+		if self.draw_past and self.predictions.past:
+			for path in self.predictions.past:
+				draw_path(frame, path, (192,192,192))
+			draw_waypoints(frame, self.predictions.past[adex], (255,211,176))
+		
+		# Draw predictions, if we have them.
+		if self.predictions.plan:
 			# For each agent, draw...
 			peds_to_draw = range(len(self.predictions.plan)) if self.draw_all_agents else [adex]
 			
@@ -165,11 +177,9 @@ class Display:
 			if self.draw_plan:
 				for ddex in peds_to_draw:
 					draw_path(frame, self.predictions.plan[ddex], (0,192,192))
-					if not self.draw_all_agents: # past for all agents already drawn
-						if past_plan is not None:
+					if not self.draw_all_agents and past_plan is not None:
+							draw_path(frame, past_plan, (0,192,192))
 							draw_waypoints(frame, past_plan, (0,192,192))
-						else:
-							draw_waypoints(frame, self.predictions.past[ddex], (255,211,176))
 		
 		cv2.imshow('frame', frame)
 		return t_plus_one
