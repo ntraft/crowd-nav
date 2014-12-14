@@ -14,20 +14,31 @@ from com.ntraft.gp import ParametricGaussianProcess
 import com.ntraft.covariance as cov
 from collections import namedtuple
 
-NUM_SAMPLES = 500	# number of particles
+NUM_SAMPLES = 100	# number of particles
 ALPHA = 1.0			# repelling force
 H = 11				# safety distance
 
 # The all-important kernels and their hyperparameters.
+# xkernel = cov.summed_kernel(
+# 	cov.matern_kernel(33.542, 47517),
+# 	cov.linear_kernel(315.46),
+# 	cov.noise_kernel(0.53043)
+# )
+# ykernel = cov.summed_kernel(
+# 	cov.matern_kernel(9.8147, 155.36),
+# 	cov.linear_kernel(17299),
+# 	cov.noise_kernel(0.61790)
+# )
+# Hyperparameters for seq_hotel.
 xkernel = cov.summed_kernel(
-	cov.matern_kernel(33.542, 47517),
-	cov.linear_kernel(315.46),
-	cov.noise_kernel(0.53043)
+	cov.matern_kernel(np.exp(2.0257), np.exp(2*2.8614)),
+	cov.linear_kernel(np.exp(-2*-5.5200)),
+	cov.noise_kernel(np.exp(2*0.5135))
 )
 ykernel = cov.summed_kernel(
-	cov.matern_kernel(9.8147, 155.36),
-	cov.linear_kernel(17299),
-	cov.noise_kernel(0.61790)
+	cov.matern_kernel(np.exp(2.0840), np.exp(2*2.3497)),
+	cov.linear_kernel(np.exp(-2*-6.1052)),
+	cov.noise_kernel(np.exp(2*-0.1758))
 )
 
 total_time = 0
