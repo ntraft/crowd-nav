@@ -52,15 +52,15 @@ def main():
 	seqname = os.path.basename(args.datadir)
 	cap = cv2.VideoCapture(os.path.join(args.datadir, seqname+".avi"))
 	disp = display.Display(cap, Hinv, obs_map, frames, timesteps, agents, destinations)
-# 	disp.set_frame(11300)
+	disp.set_frame(11301)
 # 	disp.set_frame(8289)
-	disp.set_frame(9261)
+# 	disp.set_frame(9261)
 # 	seekpos = 7.5 * 60 * 1000 # About 7 mins 30 secs
 # 	endpos = 8.7 * 60 * 1000 # About 8 mins 40 secs
 # 	cap.set(POS_MSEC, seekpos)
 	
 	pl.ion()
-	display.update_plot([], [], [], [])
+	display.plot_prediction_metrics([], [], [])
 	
 	while cap.isOpened():
 		
@@ -109,10 +109,11 @@ def run_experiment(cap, disp, timeframes, timesteps, agents):
 	print 'Running experiment...'
 	util.reset_timer()
 	agents_to_test = range(319, 331)
-	IGP_scores = np.zeros((len(agents_to_test), 2))
-	ped_scores = np.zeros((len(agents_to_test), 2))
-	pred_errs = np.zeros((len(agents_to_test), 2))
-	display.update_plot(ped_scores, IGP_scores, pred_errs, agents_to_test)
+	true_paths = []
+	planned_paths = []
+# 	IGP_scores = np.zeros((len(agents_to_test), 2))
+# 	ped_scores = np.zeros((len(agents_to_test), 2))
+	display.plot_prediction_metrics([], [], [])
 	for i, agent in enumerate(agents_to_test):
 		ped_path = agents[agent]
 		path_length = ped_path.shape[0]
@@ -129,14 +130,17 @@ def run_experiment(cap, disp, timeframes, timesteps, agents):
 				return
 		# Compute the final score for both IGP and pedestrian ground truth.
 		print 'Agent', agent, 'done.'
-		start_time = int(ped_path[0,0])
-		other_peds = [agents[a] for a in timesteps[start_time] if a != agent]
-		other_paths = [util.get_path_at_time(start_time, fullpath)[1][:,1:4] for fullpath in other_peds]
-		IGP_scores[i] = util.length_and_safety(final_path, other_paths)
-		ped_scores[i] = util.length_and_safety(ped_path[:,1:4], other_paths)
-		pred_errs[i] = util.prediction_errors(ped_path[:,1:4], final_path)
-		display.update_plot(ped_scores, IGP_scores, pred_errs, agents_to_test)
-	results = np.column_stack((agents_to_test, ped_scores, IGP_scores))
+# 		start_time = int(ped_path[0,0])
+# 		other_peds = [agents[a] for a in timesteps[start_time] if a != agent]
+# 		other_paths = [util.get_path_at_time(start_time, fullpath)[1][:,1:4] for fullpath in other_peds]
+# 		IGP_scores[i] = util.length_and_safety(final_path, other_paths)
+# 		ped_scores[i] = util.length_and_safety(ped_path[:,1:4], other_paths)
+		true_paths.append(ped_path[:,1:4])
+		planned_paths.append(final_path)
+		pred_errs = util.calc_pred_scores(true_paths, planned_paths, util.prediction_errors)
+		path_errs = util.calc_pred_scores(true_paths, planned_paths, util.path_errors)
+		display.plot_prediction_metrics(pred_errs, path_errs, agents_to_test[0:i+1])
+	results = np.column_stack((agents_to_test, pred_errs, path_errs))
 	np.savetxt('experiment.txt', results)
 	print 'EXPERIMENT COMPLETE.'
 	util.report_time()

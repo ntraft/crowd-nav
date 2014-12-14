@@ -19,27 +19,27 @@ ALPHA = 1.0			# repelling force
 H = 11				# safety distance
 
 # The all-important kernels and their hyperparameters.
-# xkernel = cov.summed_kernel(
-# 	cov.matern_kernel(33.542, 47517),
-# 	cov.linear_kernel(315.46),
-# 	cov.noise_kernel(0.53043)
-# )
-# ykernel = cov.summed_kernel(
-# 	cov.matern_kernel(9.8147, 155.36),
-# 	cov.linear_kernel(17299),
-# 	cov.noise_kernel(0.61790)
-# )
-# Hyperparameters for seq_hotel.
 xkernel = cov.summed_kernel(
-	cov.matern_kernel(np.exp(2.0257), np.exp(2*2.8614)),
-	cov.linear_kernel(np.exp(-2*-5.5200)),
-	cov.noise_kernel(np.exp(2*0.5135))
+	cov.matern_kernel(np.exp(3.5128), np.exp(2*5.3844)),
+	cov.linear_kernel(np.exp(-2*-2.8770)),
+	cov.noise_kernel(np.exp(2*-0.3170))
 )
 ykernel = cov.summed_kernel(
-	cov.matern_kernel(np.exp(2.0840), np.exp(2*2.3497)),
-	cov.linear_kernel(np.exp(-2*-6.1052)),
-	cov.noise_kernel(np.exp(2*-0.1758))
+	cov.matern_kernel(np.exp(2.2839), np.exp(2*2.5229)),
+	cov.linear_kernel(np.exp(-2*-4.8792)),
+	cov.noise_kernel(np.exp(2*-0.2407))
 )
+# Hyperparameters for seq_hotel.
+# xkernel = cov.summed_kernel(
+# 	cov.matern_kernel(np.exp(2.0257), np.exp(2*2.8614)),
+# 	cov.linear_kernel(np.exp(-2*-5.5200)),
+# 	cov.noise_kernel(np.exp(2*0.5135))
+# )
+# ykernel = cov.summed_kernel(
+# 	cov.matern_kernel(np.exp(2.0840), np.exp(2*2.3497)),
+# 	cov.linear_kernel(np.exp(-2*-6.1052)),
+# 	cov.noise_kernel(np.exp(2*-0.1758))
+# )
 
 total_time = 0
 total_runs = 0
@@ -204,7 +204,9 @@ def length_and_safety(path, other_paths):
 
 def prediction_errors(truth, plan):
 	# Compare point-to-point at each time t.
-# 	return np.linalg.norm(plan - truth, axis=1)
+	return np.linalg.norm(plan - truth, axis=1)
+
+def path_errors(truth, plan):
 	# Compare to point on closest path, if we only care about path shape and
 	# not velocity. (This is most certainly cheating.)
 	# Another measure would be the CLEAR MOT metrics: % correct points within
@@ -216,10 +218,12 @@ def calc_nav_scores(true_paths, plan):
 	ped_scores = np.array([length_and_safety(path, true_paths[:i]+true_paths[i+1:]) for i, path in enumerate(true_paths)])
 	return ped_scores, robot_scores
 
-def calc_pred_scores(true_paths, planned_paths):
+def calc_pred_scores(true_paths, planned_paths, errfun):
 	num_peds = len(planned_paths)
-	scores = [np.empty(0)]*num_peds
+	num_times = max((len(x) for x in planned_paths))
+	scores = np.ones((num_times, num_peds))*np.nan
 	for i in range(num_peds):
-		scores[i] = prediction_errors(true_paths[i], planned_paths[i])
+		errs = errfun(true_paths[i], planned_paths[i])
+		scores[0:len(errs), i] = errs
 	return scores
 
