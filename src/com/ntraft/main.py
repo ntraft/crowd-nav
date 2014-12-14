@@ -78,13 +78,11 @@ def main():
 		elif key == LEFT:
 			disp.back_one_frame()
 		elif key == UP:
-			if disp.draw_all_agents: disp.sample_num += 1
-			else: disp.agent_num += 1
-			disp.reset_frame()
+			if disp.draw_all_agents: disp.next_sample()
+			else: disp.next_agent()
 		elif key == DOWN:
-			if disp.draw_all_agents: disp.sample_num -= 1
-			else: disp.agent_num -= 1
-			disp.reset_frame()
+			if disp.draw_all_agents: disp.prev_sample()
+			else: disp.prev_agent()
 		elif key == ord('a'):
 			disp.draw_all_agents = not disp.draw_all_agents
 			disp.draw_all_samples = not disp.draw_all_samples

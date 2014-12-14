@@ -4,11 +4,13 @@ Created on Apr 10, 2014
 @author: ntraft
 '''
 from __future__ import division
+
 import cv2
-import numpy as np
-import matplotlib.pyplot as pl
 
 import com.ntraft.util as util
+import matplotlib.pyplot as pl
+import numpy as np
+
 
 POS_MSEC = cv2.cv.CV_CAP_PROP_POS_MSEC
 POS_FRAMES = cv2.cv.CV_CAP_PROP_POS_FRAMES
@@ -17,6 +19,7 @@ NO_SAMPLES = 0
 PRIOR_SAMPLES = 1
 POSTERIOR_SAMPLES = 2
 SAMPLE_CHOICES = 3
+
 
 '''
 TODO
@@ -42,9 +45,8 @@ class Display:
 		self.agents = agents
 		self.destinations = destinations
 		self.predictions = util.empty_predictions
-		self.agent_num = 0
+		self.agent_num = 1
 		self.sample_num = 0
-		self.agent_txt = ''
 		self.last_t = -1
 		self.do_predictions = True
 		self.draw_all_agents = False
@@ -77,9 +79,40 @@ class Display:
 			self.predictions = util.empty_predictions
 			self.reset_frame()
 
+	def next_agent(self):
+		self.change_agent(lambda x: x+1)
+	def prev_agent(self):
+		self.change_agent(lambda x: x-1)
+	def change_agent(self, fn):
+		if self.last_t == -1: return
+		agents_in_this_frame = self.timesteps[self.last_t]
+		curr_adex = next((i for i,v in enumerate(agents_in_this_frame) if v==self.agent_num), 0)
+		next_adex = util.cycle_index(curr_adex, fn, len(agents_in_this_frame))
+		self.agent_num = agents_in_this_frame[next_adex]
+		self.reset_frame()
+
+	# Returns the index and ID for the desired agent if present in this frame.
+	# Otherwise, returns the first agent in the frame.
+	def get_agent_index(self, desired_agent):
+		if self.last_t <= 0: return (0,0)
+		agents_in_this_frame = self.timesteps[self.last_t]
+		adex = next((i for i,v in enumerate(agents_in_this_frame) if v==self.agent_num), 0)
+		return (adex, agents_in_this_frame[adex])
+
+	def next_sample(self):
+		self.change_sample(lambda x: x+1)
+	def prev_sample(self):
+		self.change_sample(lambda x: x-1)
+	def change_sample(self, fn):
+		self.sample_num = util.cycle_index(self.sample_num, fn, util.NUM_SAMPLES)
+		self.reset_frame()
+
 	def do_frame(self, agent=-1, past_plan=None, with_scores=True):
 		if not self.cap.isOpened():
 			raise Exception('Video stream closed.')
+		if agent == -1:
+			agent = self.agent_num
+		adex, displayed_agent = self.get_agent_index(agent)
 		
 		t_plus_one = None
 		frame_num = int(self.cap.get(POS_FRAMES))
@@ -87,26 +120,21 @@ class Display:
 		_, frame = self.cap.read()
 	
 		frame_txt = "{:0>2}:{:0>2}".format(now//60, now%60)
-		if self.predictions.past:
-			adex = self.agent_num % len(self.predictions.past)
+		agent_txt = 'Agent: {}'.format(displayed_agent)
 		
 		# Check for end of annotations.
 		if frame_num >= len(self.frames):
 			frame_txt += ' (eof)'
-			self.agent_txt = ''
+			agent_txt = ''
 		else:
 			frame_txt += ' (' + str(frame_num) + ')'
-			# If we've reached a new timestep, recompute the observations.
 			t = self.frames[frame_num]
 			if t >= 0:
-				if agent > -1:
-					adex = next(i for i,v in enumerate(self.timesteps[t]) if v==agent)
-				else:
-					adex = self.agent_num % len(self.timesteps[t])
-				displayed_agent = self.timesteps[t][adex]
-				self.agent_txt = 'Agent: {}'.format(displayed_agent)
+				# If we've reached a new timestep, recompute the observations.
 				if t != self.last_t:
 					self.last_t = t
+					adex, displayed_agent = self.get_agent_index(agent)
+					agent_txt = 'Agent: {}'.format(displayed_agent)
 					if self.do_predictions:
 						self.predictions = util.make_predictions(t, self.timesteps, self.agents, agent, past_plan)
 						if self.predictions.plan[adex].shape[0] > 1:
@@ -131,9 +159,9 @@ class Display:
 		# Inform of frame and agent number.
 		pt = (3, frame.shape[0]-3)
 		ll, ur = draw_text(frame, pt, frame_txt)
-		if self.agent_txt:
+		if agent_txt:
 			pt = (ll[0], ur[1])
-			ll, ur = draw_text(frame, pt, self.agent_txt)
+			ll, ur = draw_text(frame, pt, agent_txt)
 		
 		# Draw pedestrian paths so far.
 		if self.draw_past and self.predictions.past:
@@ -152,8 +180,7 @@ class Display:
 				if self.draw_all_samples:
 					samples_to_draw = range(util.NUM_SAMPLES)
 				else:
-					sdex = self.sample_num % util.NUM_SAMPLES
-					if sdex < 0: sdex = util.NUM_SAMPLES + sdex
+					sdex = self.sample_num
 					samples_to_draw = [sdex]
 					pt = (ll[0], ur[1])
 					ll, ur = draw_text(frame, pt, 'Sample: {}'.format(sdex+1))

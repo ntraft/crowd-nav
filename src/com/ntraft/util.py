@@ -126,6 +126,11 @@ def get_path_at_time(t, fullpath):
 	future = fullpath[path_end:]
 	return past_plus_dest, future
 
+def cycle_index(index, change_fn, limit):
+	newdex = change_fn(index) % limit
+	if newdex < 0: newdex = limit + newdex
+	return newdex
+
 def dist(loc1, loc2):
 	return np.linalg.norm(loc2 - loc1)
 
