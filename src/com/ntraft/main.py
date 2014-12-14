@@ -53,7 +53,9 @@ def main():
 	cap = cv2.VideoCapture(os.path.join(args.datadir, seqname+".avi"))
 	disp = display.Display(cap, Hinv, obs_map, frames, timesteps, agents, destinations)
 # 	disp.set_frame(11301) # ETH sequence, big crowds both ways
-	disp.set_frame(8289) # ETH sequence, agent #175
+# 	disp.set_frame(8289) # ETH sequence, agent #175 (1 v crowd)
+# 	disp.set_frame(10371) # ETH sequence, agent #236 (1 v crowd)
+	disp.set_frame(8859) # ETH sequence, agent #194 (1 v 1, choosing non-optimal avoidance)
 # 	disp.set_frame(9261) # Hotel sequence, agent #175
 # 	seekpos = 7.5 * 60 * 1000 # About 7 mins 30 secs
 # 	endpos = 8.7 * 60 * 1000 # About 8 mins 40 secs
