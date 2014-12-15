@@ -19,27 +19,66 @@ ALPHA = 1.0			# repelling force
 H = 11				# safety distance
 
 # The all-important kernels and their hyperparameters.
-# xkernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(3.5128), np.exp(2*5.3844)),
-# 	cov.linear_kernel(np.exp(-2*-2.8770)),
-# 	cov.noise_kernel(np.exp(2*-0.3170))
-# )
-# ykernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(2.2839), np.exp(2*2.5229)),
-# 	cov.linear_kernel(np.exp(-2*-4.8792)),
-# 	cov.noise_kernel(np.exp(2*-0.2407))
-# )
-# Hyperparameters for seq_hotel.
+
+# Hyperparameters from seq_eth #175
 xkernel = cov.summed_kernel(
-	cov.matern_kernel(np.exp(2.0257), np.exp(2*2.8614)),
-	cov.linear_kernel(np.exp(-2*-5.5200)),
-	cov.noise_kernel(np.exp(2*0.5135))
+	cov.matern_kernel(np.exp(3.5128), np.exp(2*5.3844)),
+	cov.linear_kernel(np.exp(-2*-2.8770)),
+	cov.noise_kernel(np.exp(2*-0.3170))
 )
 ykernel = cov.summed_kernel(
-	cov.matern_kernel(np.exp(2.0840), np.exp(2*2.3497)),
-	cov.linear_kernel(np.exp(-2*-6.1052)),
-	cov.noise_kernel(np.exp(2*-0.1758))
+	cov.matern_kernel(np.exp(2.2839), np.exp(2*2.5229)),
+	cov.linear_kernel(np.exp(-2*-4.8792)),
+	cov.noise_kernel(np.exp(2*-0.2407))
 )
+
+# Hyperparameters from seq_eth #48 - HUGE variance
+# xkernel = cov.summed_kernel(
+# 	cov.matern_kernel(np.exp(2.0194), np.exp(2*2.7259)),
+# 	cov.linear_kernel(np.exp(-2*-3.2502)),
+# 	cov.noise_kernel(np.exp(2*-1.1128))
+# )
+# ykernel = cov.summed_kernel(
+# 	cov.matern_kernel(np.exp(3.5181), np.exp(2*5.4197)),
+# 	cov.linear_kernel(np.exp(-2*-0.8087)),
+# 	cov.noise_kernel(np.exp(2*-0.5089))
+# )
+
+# Hyperparameters from seq_eth #201 - pretty squirrely
+# xkernel = cov.summed_kernel(
+# 	cov.matern_kernel(np.exp(3.8777), np.exp(2*6.2545)),
+# 	cov.linear_kernel(np.exp(-2*-1.6083)),
+# 	cov.noise_kernel(np.exp(2*0.1863))
+# )
+# ykernel = cov.summed_kernel(
+# 	cov.matern_kernel(np.exp(2.0143), np.exp(2*3.4259)),
+# 	cov.linear_kernel(np.exp(-2*-5.5210)),
+# 	cov.noise_kernel(np.exp(2*-0.2941))
+# )
+
+# Hyperparameters from seq_eth #194 - BAD
+# xkernel = cov.summed_kernel(
+# 	cov.matern_kernel(np.exp(1.1525), np.exp(2*1.8115)),
+# 	cov.linear_kernel(np.exp(-2*-4.5797)),
+# 	cov.noise_kernel(np.exp(2*-6.1552))
+# )
+# ykernel = cov.summed_kernel(
+# 	cov.matern_kernel(np.exp(1.1738), np.exp(2*1.7332)),
+# 	cov.linear_kernel(np.exp(-2*-5.3511)),
+# 	cov.noise_kernel(np.exp(2*-6.2679))
+# )
+
+# Hyperparameters for seq_hotel.
+# xkernel = cov.summed_kernel(
+# 	cov.matern_kernel(np.exp(2.0257), np.exp(2*2.8614)),
+# 	cov.linear_kernel(np.exp(-2*-5.5200)),
+# 	cov.noise_kernel(np.exp(2*0.5135))
+# )
+# ykernel = cov.summed_kernel(
+# 	cov.matern_kernel(np.exp(2.0840), np.exp(2*2.3497)),
+# 	cov.linear_kernel(np.exp(-2*-6.1052)),
+# 	cov.noise_kernel(np.exp(2*-0.1758))
+# )
 
 total_time = 0
 total_runs = 0
