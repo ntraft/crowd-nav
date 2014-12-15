@@ -47,3 +47,6 @@ ewap_dataset
 
 # Experiments
 experiment.txt
+path_errors.txt
+prediction_errors.txt
+
