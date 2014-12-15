@@ -96,7 +96,7 @@ class Display:
 	def get_agent_index(self, desired_agent):
 		if self.last_t <= 0: return (0,0)
 		agents_in_this_frame = self.timesteps[self.last_t]
-		adex = next((i for i,v in enumerate(agents_in_this_frame) if v==self.agent_num), 0)
+		adex = next((i for i,v in enumerate(agents_in_this_frame) if v==desired_agent), 0)
 		return (adex, agents_in_this_frame[adex])
 
 	def next_sample(self):
@@ -107,7 +107,7 @@ class Display:
 		self.sample_num = util.cycle_index(self.sample_num, fn, util.NUM_SAMPLES)
 		self.reset_frame()
 
-	def do_frame(self, agent=-1, past_plan=None, with_scores=True):
+	def do_frame(self, agent=-1, past_plan=None, with_scores=True, multi_prediction=False):
 		if not self.cap.isOpened():
 			raise Exception('Video stream closed.')
 		if agent == -1:
@@ -115,6 +115,7 @@ class Display:
 		adex, displayed_agent = self.get_agent_index(agent)
 		
 		t_plus_one = None
+		t_plus_one2 = None
 		frame_num = int(self.cap.get(POS_FRAMES))
 		now = int(self.cap.get(POS_MSEC) / 1000)
 		_, frame = self.cap.read()
@@ -137,6 +138,10 @@ class Display:
 					agent_txt = 'Agent: {}'.format(displayed_agent)
 					if self.do_predictions:
 						self.predictions = util.make_predictions(t, self.timesteps, self.agents, agent, past_plan)
+						if multi_prediction and past_plan is not None:
+							predictions2 = util.make_predictions(t, self.timesteps, self.agents, agent, None)
+							if predictions2.plan[adex].shape[0] > 1:
+								t_plus_one2 = predictions2.plan[adex][1]
 						if self.predictions.plan[adex].shape[0] > 1:
 							t_plus_one = self.predictions.plan[adex][1]
 						if with_scores:
@@ -209,29 +214,27 @@ class Display:
 							draw_waypoints(frame, past_plan, (0,192,192))
 		
 		cv2.imshow('frame', frame)
-		return t_plus_one
+		return t_plus_one if t_plus_one2 is None else (t_plus_one, t_plus_one2)
 
 def plot_prediction_metrics(prediction_errors, path_errors, agents):
 	pl.figure(1, (10,10))
 	pl.clf()
 	if len(prediction_errors) > 0:
 		pl.subplot(2,1,1)
-		pl.title('Prediction Error')
-		pl.xlabel('Time (frames)'); pl.ylabel('Error (px)')
-		m = np.nanmean(prediction_errors, 1)
-		lines = pl.plot(prediction_errors)
-		meanline = pl.plot(m, 'k--', lw=4)
-		pl.legend(lines + meanline, ['{}'.format(a) for a in agents] + ['mean'])
+		plot_prediction_error('Prediction Error', prediction_errors, agents)
 		
 		pl.subplot(2,1,2)
-		pl.title('Path Error')
-		pl.xlabel('Time (frames)'); pl.ylabel('Error (px)')
-		m = np.nanmean(path_errors, 1)
-		lines = pl.plot(path_errors)
-		meanline = pl.plot(m, 'k--', lw=4)
-		pl.legend(lines + meanline, ['{}'.format(a) for a in agents] + ['mean'])
+		plot_prediction_error('Path Error', path_errors, agents)
 		
 		pl.draw()
+
+def plot_prediction_error(title, errors, agents):
+	pl.title(title)
+	pl.xlabel('Time (frames)'); pl.ylabel('Error (px)')
+	m = np.nanmean(errors, 1)
+	lines = pl.plot(errors)
+	meanline = pl.plot(m, 'k--', lw=4)
+	pl.legend(lines + meanline, ['{}'.format(a) for a in agents] + ['mean'])
 
 def plot_nav_metrics(ped_scores, IGP_scores):
 	pl.clf()

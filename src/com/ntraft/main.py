@@ -27,8 +27,6 @@ LEFT = 2
 RIGHT = 3
 ESC = 27
 
-DRAW_FINAL_PATH = True
-
 def main():
 	# Parse command-line arguments.
 	args = parse_args()
@@ -52,10 +50,12 @@ def main():
 	seqname = os.path.basename(args.datadir)
 	cap = cv2.VideoCapture(os.path.join(args.datadir, seqname+".avi"))
 	disp = display.Display(cap, Hinv, obs_map, frames, timesteps, agents, destinations)
-# 	disp.set_frame(11301) # ETH sequence, big crowds both ways
+# 	disp.set_frame(780) # ETH sequence, beginning
+# 	disp.set_frame(2238) # ETH sequence, agent #48 (1 v 1)
+	disp.set_frame(11301) # ETH sequence, big crowds both ways
 # 	disp.set_frame(8289) # ETH sequence, agent #175 (1 v crowd)
-# 	disp.set_frame(10371) # ETH sequence, agent #236 (1 v crowd)
-	disp.set_frame(8859) # ETH sequence, agent #194 (1 v 1, choosing non-optimal avoidance)
+# 	disp.set_frame(9867) # ETH sequence, agent #236 (1 v crowd)
+# 	disp.set_frame(8859) # ETH sequence, agent #194 (1 v 1, choosing non-optimal avoidance)
 # 	disp.set_frame(9261) # Hotel sequence, agent #175
 # 	seekpos = 7.5 * 60 * 1000 # About 7 mins 30 secs
 # 	endpos = 8.7 * 60 * 1000 # About 8 mins 40 secs
@@ -111,23 +111,27 @@ def run_experiment(cap, disp, timeframes, timesteps, agents):
 	print 'Running experiment...'
 	util.reset_timer()
 	agents_to_test = range(319, 331)
+# 	agents_to_test = [48, 49]
 	true_paths = []
 	planned_paths = []
+	one_step_paths = []
 # 	IGP_scores = np.zeros((len(agents_to_test), 2))
 # 	ped_scores = np.zeros((len(agents_to_test), 2))
 	display.plot_prediction_metrics([], [], [])
 	for i, agent in enumerate(agents_to_test):
+		print 'Agent ', agent
 		ped_path = agents[agent]
 		path_length = ped_path.shape[0]
 		start = 3 # Initializes path with start+1 points.
 		final_path = np.zeros((path_length, 3))
 		final_path[0:start+1, :] = ped_path[0:start+1,1:4]
+		one_step_final_path = final_path.copy()
 		# Run IGP through the path sequence.
 		for t in range(start, path_length-1):
 			frame_num = timeframes[int(ped_path[t,0])]
 			print 'doing frame', frame_num
 			disp.set_frame(frame_num)
-			final_path[t+1] = disp.do_frame(agent, final_path[:t+1], False)
+			final_path[t+1], one_step_final_path[t+1] = disp.do_frame(agent, final_path[:t+1], False, True)
 			if cv2.waitKey(1) != -1:
 				print 'Canceled!'
 				return
@@ -140,9 +144,15 @@ def run_experiment(cap, disp, timeframes, timesteps, agents):
 # 		ped_scores[i] = util.length_and_safety(ped_path[:,1:4], other_paths)
 		true_paths.append(ped_path[:,1:4])
 		planned_paths.append(final_path)
+		one_step_paths.append(one_step_final_path)
 		pred_errs = util.calc_pred_scores(true_paths, planned_paths, util.prediction_errors)
 		path_errs = util.calc_pred_scores(true_paths, planned_paths, util.path_errors)
 		display.plot_prediction_metrics(pred_errs, path_errs, agents_to_test[0:i+1])
+		one_step_errors = util.calc_pred_scores(true_paths, one_step_paths, util.prediction_errors)
+		pl.figure(2)
+		pl.clf()
+		display.plot_prediction_error('One-Step Prediction Errors', one_step_errors, agents_to_test[0:i+1])
+		pl.draw()
 # 	results = np.column_stack((agents_to_test, ped_scores, IGP_scores))
 	pred_results = np.column_stack((agents_to_test, pred_errs.T))
 	path_results = np.column_stack((agents_to_test, path_errs.T))
