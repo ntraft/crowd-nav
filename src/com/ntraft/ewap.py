@@ -32,7 +32,8 @@ def parse_annotations(Hinv, obsmat_txt):
 			frames[frame] = time
 			timeframes[time] = frame
 		ped = int(row[1])
-		timesteps[time].append(ped)
+		if ped != 171: # TEMP HACK - let's pretend this guy never existed.
+			timesteps[time].append(ped)
 		loc = np.array([row[2], row[4], 1])
 		loc = util.to_image_frame(Hinv, loc)
 		loc = [time, loc[0], loc[1], loc[2]]
