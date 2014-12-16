@@ -50,16 +50,28 @@ def main():
 	seqname = os.path.basename(args.datadir)
 	cap = cv2.VideoCapture(os.path.join(args.datadir, seqname+".avi"))
 	disp = display.Display(cap, Hinv, obs_map, frames, timesteps, agents, destinations)
+	
+	# We can set the exact frame we want to look at:
 # 	disp.set_frame(780) # ETH sequence, beginning
 # 	disp.set_frame(2238) # ETH sequence, agent #48 (1 v 1)
-	disp.set_frame(11301) # ETH sequence, big crowds both ways
+# 	disp.set_frame(11301) # ETH sequence, big crowds both ways
 # 	disp.set_frame(8289) # ETH sequence, agent #175 (1 v crowd)
 # 	disp.set_frame(9867) # ETH sequence, agent #236 (1 v crowd)
 # 	disp.set_frame(8859) # ETH sequence, agent #194 (1 v 1, choosing non-optimal avoidance)
 # 	disp.set_frame(9261) # Hotel sequence, agent #175
+
+	# We can also go by minutes & seconds:
 # 	seekpos = 7.5 * 60 * 1000 # About 7 mins 30 secs
 # 	endpos = 8.7 * 60 * 1000 # About 8 mins 40 secs
 # 	cap.set(POS_MSEC, seekpos)
+
+	# Alternatively, we can search for a particular agent we're interested in:
+	agent_to_search = 177
+	ped_path = agents[agent_to_search]
+	frame_num = timeframes[int(ped_path[0,0])]
+	disp.set_frame(frame_num)
+	disp.agent_num = agent_to_search
+	disp.do_predictions = False
 	
 	pl.ion()
 	display.plot_prediction_metrics([], [], [])
