@@ -130,7 +130,8 @@ class Display:
 		else:
 			frame_txt += ' (' + str(frame_num) + ')'
 			t = self.frames[frame_num]
-			if t >= 0:
+			# There really shouldn't be any empty timesteps but I found some so we'll have to deal with it.
+			if t >= 0 and self.timesteps[t]:
 				# If we've reached a new timestep, recompute the observations.
 				if t != self.last_t:
 					self.last_t = t
