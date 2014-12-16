@@ -246,6 +246,7 @@ def make_predictions(t, timesteps, agents, robot=-1, past_plan=None):
 	return Predictions(past_paths, true_paths, prior, posterior, weights, plan)
 
 def fake_predictions(t, timesteps, agents, variance):
+	std_dev = np.sqrt(variance)
 	peds = timesteps[t]
 	past_paths = []
 	true_paths = []
@@ -260,10 +261,10 @@ def fake_predictions(t, timesteps, agents, variance):
 	for path in true_paths:
 		aplan = path.copy()
 		plans.append(aplan)
-		noise = 0
-		for step in aplan:
+		noise = np.zeros(2)
+		for step in aplan[1:]:
 			# Progressively add more noise at each timestep.
-			noise += np.random.normal(0, np.sqrt(variance), 2)
+			noise += np.random.normal(0, std_dev, 2)
 			step[0:2] += noise
 	return Predictions(past_paths, true_paths, [], [], [], plans)
 
