@@ -31,7 +31,7 @@ def main():
 	print 'Running experiment...'
 	util.reset_timer()
 	
-	num_samples = 10
+	num_samples = 100
 	total_samples = 0
 	M = np.zeros((2,2))
 	for frame in timeline:
@@ -41,7 +41,8 @@ def main():
 		print '{:.1%} complete'.format((frame-timeline[0])/len(timeline))
 		
 		for _ in range(num_samples):
-			predictions = util.make_predictions(t, timesteps, agents)
+# 			predictions = util.make_predictions(t, timesteps, agents)
+			predictions = util.fake_predictions(t, timesteps, agents, 100.0)
 			for a,plan in enumerate(predictions.plan):
 				if plan.shape[0] > 1:
 					error = predictions.true_paths[a][1,0:2] - plan[1,0:2]

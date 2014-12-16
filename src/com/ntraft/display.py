@@ -138,6 +138,7 @@ class Display:
 					agent_txt = 'Agent: {}'.format(displayed_agent)
 					if self.do_predictions:
 						self.predictions = util.make_predictions(t, self.timesteps, self.agents, agent, past_plan)
+# 						self.predictions = util.fake_predictions(t, self.timesteps, self.agents, 10.0)
 						if multi_prediction and past_plan is not None:
 							predictions2 = util.make_predictions(t, self.timesteps, self.agents, agent, None)
 							if predictions2.plan[adex].shape[0] > 1:
@@ -181,9 +182,12 @@ class Display:
 			
 			# The GP samples.
 			if self.draw_samples != NO_SAMPLES:
-				# What sample are we showing?
+				# What kind of sample are we showing?
+				preds = self.predictions.prior if self.draw_samples == PRIOR_SAMPLES else self.predictions.posterior
+				# Which sample(s) are we showing?
 				if self.draw_all_samples:
-					samples_to_draw = range(util.NUM_SAMPLES)
+					if preds: samples_to_draw = range(preds[0].shape[1])
+					else: samples_to_draw = []
 				else:
 					sdex = self.sample_num
 					samples_to_draw = [sdex]
@@ -191,8 +195,6 @@ class Display:
 					ll, ur = draw_text(frame, pt, 'Sample: {}'.format(sdex+1))
 					pt = (ll[0], ur[1])
 					draw_text(frame, pt, 'Weight: {:.1e}'.format(self.predictions.weights[sdex]))
-				# What kind of sample are we showing?
-				preds = self.predictions.prior if self.draw_samples == PRIOR_SAMPLES else self.predictions.posterior
 				# Now actually draw the sample.
 				for ddex in peds_to_draw:
 					for i in samples_to_draw:

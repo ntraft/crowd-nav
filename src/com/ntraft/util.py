@@ -141,6 +141,7 @@ ykernel = cov.summed_kernel(
 # )
 
 # Trained from [48:49, 169:170, 172:175, 319:331] greedily. - BAD
+# Can be made s.p.d. with a large addition if you need to show a bad example.
 # xkernel = cov.summed_kernel(
 # 	cov.matern_kernel(np.exp(3.5479), np.exp(2*5.6035)),
 # 	cov.linear_kernel(np.exp(-2*5.3545)),
@@ -153,16 +154,16 @@ ykernel = cov.summed_kernel(
 # )
 
 # Trained from [48:49, 169:170, 172:175, 319:331], averaged. - Nice.
-xkernel = cov.summed_kernel(
-	cov.matern_kernel(np.exp(3.4171), np.exp(2*4.7080)),
-	cov.linear_kernel(np.exp(-2*-2.7809)),
-	cov.noise_kernel(np.exp(2*0.0088))
-)
-ykernel = cov.summed_kernel(
-	cov.matern_kernel(np.exp(2.4912), np.exp(2*3.6663)),
-	cov.linear_kernel(np.exp(-2*-2.2506)),
-	cov.noise_kernel(np.exp(2*-0.4789))
-)
+# xkernel = cov.summed_kernel(
+# 	cov.matern_kernel(np.exp(3.4171), np.exp(2*4.7080)),
+# 	cov.linear_kernel(np.exp(-2*-2.7809)),
+# 	cov.noise_kernel(np.exp(2*0.0088))
+# )
+# ykernel = cov.summed_kernel(
+# 	cov.matern_kernel(np.exp(2.4912), np.exp(2*3.6663)),
+# 	cov.linear_kernel(np.exp(-2*-2.2506)),
+# 	cov.noise_kernel(np.exp(2*-0.4789))
+# )
 
 # Trained from [48:49, 169:170, 172:175, 319:331], average of absolute values.
 # xkernel = cov.summed_kernel(
@@ -193,7 +194,8 @@ def reset_timer():
 	total_time = 0; total_runs = 0
 
 def report_time():
-	print('IGP on average took {:.2f} seconds with {} particles.'.format(total_time/total_runs, NUM_SAMPLES))
+	time_taken = 0 if total_runs==0 else total_time/total_runs
+	print('IGP on average took {:.2f} seconds with {} particles.'.format(time_taken, NUM_SAMPLES))
 
 def to_pixels(Hinv, loc):
 	"""
@@ -242,6 +244,28 @@ def make_predictions(t, timesteps, agents, robot=-1, past_plan=None):
 	prior = [p[:,sortdex,:] for p in prior]
 	posterior, plan = compute_expectation(prior, weights)
 	return Predictions(past_paths, true_paths, prior, posterior, weights, plan)
+
+def fake_predictions(t, timesteps, agents, variance):
+	peds = timesteps[t]
+	past_paths = []
+	true_paths = []
+	for ped in peds:
+		# Get the past and future paths of the agent.
+		past_plus_dest, future = get_path_at_time(t, agents[ped])
+		past_paths.append(past_plus_dest[:-1,1:4].copy())
+		true_paths.append(future[:,1:4])
+	
+	# Just take ground truth and add some Gaussian noise.
+	plans = []
+	for path in true_paths:
+		aplan = path.copy()
+		plans.append(aplan)
+		noise = 0
+		for step in aplan:
+			# Progressively add more noise at each timestep.
+			noise += np.random.normal(0, np.sqrt(variance), 2)
+			step[0:2] += noise
+	return Predictions(past_paths, true_paths, [], [], [], plans)
 
 def get_past_paths(t, timesteps, agents):
 	peds = timesteps[t]
