@@ -31,38 +31,39 @@ def main():
 	print 'Running experiment...'
 	util.reset_timer()
 	
-	num_samples = 10
+	num_samples = 100
 	total_samples = 0
-	M = np.zeros((2,2))
-	for frame in timeline:
-		t = frames[frame]
-		if t == -1: continue
+	variances = np.array([0.1, 0.3, 1, 3, 10, 30, 100])
+	entropies = np.zeros_like(variances)
+	for i, sigma2 in enumerate(variances):
+		M = np.zeros((2,2))
+		for frame in timeline:
+			t = frames[frame]
+			if t == -1: continue
+			
+			T = len(timeline)
+			print '{:.1%} complete'.format((T*i+frame-timeline[0])/(T*len(variances)))
+			
+			for _ in range(num_samples):
+	# 			predictions = util.make_predictions(t, timesteps, agents)
+				predictions = util.fake_predictions(t, timesteps, agents, sigma2)
+				for a,plan in enumerate(predictions.plan):
+					if plan.shape[0] > 1:
+						error = predictions.true_paths[a][1,0:2] - plan[1,0:2]
+						M += np.outer(error, error)
+						total_samples += 1
 		
-		print '{:.1%} complete'.format((frame-timeline[0])/len(timeline))
-		
-		for _ in range(num_samples):
-# 			predictions = util.make_predictions(t, timesteps, agents)
-			# Possible issue: empirical variance is twice what it should be.
-			predictions = util.fake_predictions(t, timesteps, agents, 1.0)
-			for a,plan in enumerate(predictions.plan):
-				if plan.shape[0] > 1:
-					error = predictions.true_paths[a][1,0:2] - plan[1,0:2]
-					M += np.outer(error, error)
-					total_samples += 1
-		# for each agent...
-			# generate GP samples
-			# for each sample...
-				# calc difference from ground truth
-				# calc variance (outer product)
-				# add to M accumulator
-	M /= total_samples
-	entropy = 0.5*np.log((2*np.pi*np.e)**2 * np.linalg.det(M))
+		M /= total_samples
+		entropies[i] = 0.5*np.log((2*np.pi*np.e)**2 * np.linalg.det(M))
+# 		print 'entropy is', entropy
+# 		print 'variance:'
+# 		print M
 	
 	print 'EXPERIMENT COMPLETE.'
 	util.report_time()
-	print 'entropy is', entropy
-	print 'variance:'
-	print M
+	results = np.column_stack((variances, entropies))
+	print results
+	np.savetxt('experiments/entropy_vs_variance.txt', results)
 
 def parse_args():
 	parser = argparse.ArgumentParser()
