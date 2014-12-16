@@ -31,7 +31,7 @@ def main():
 	print 'Running experiment...'
 	util.reset_timer()
 	
-	num_samples = 100
+	num_samples = 10
 	total_samples = 0
 	M = np.zeros((2,2))
 	for frame in timeline:
@@ -42,7 +42,8 @@ def main():
 		
 		for _ in range(num_samples):
 # 			predictions = util.make_predictions(t, timesteps, agents)
-			predictions = util.fake_predictions(t, timesteps, agents, 100.0)
+			# Possible issue: empirical variance is twice what it should be.
+			predictions = util.fake_predictions(t, timesteps, agents, 1.0)
 			for a,plan in enumerate(predictions.plan):
 				if plan.shape[0] > 1:
 					error = predictions.true_paths[a][1,0:2] - plan[1,0:2]
@@ -60,6 +61,8 @@ def main():
 	print 'EXPERIMENT COMPLETE.'
 	util.report_time()
 	print 'entropy is', entropy
+	print 'variance:'
+	print M
 
 def parse_args():
 	parser = argparse.ArgumentParser()
