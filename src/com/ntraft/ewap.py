@@ -10,6 +10,8 @@ import numpy as np
 from PIL import Image
 import com.ntraft.util as util
 
+ignored_peds = [171, 216]
+
 def create_obstacle_map(map_png):
 	rawmap = np.array(Image.open(map_png))
 	return rawmap
@@ -32,7 +34,7 @@ def parse_annotations(Hinv, obsmat_txt):
 			frames[frame] = time
 			timeframes[time] = frame
 		ped = int(row[1])
-		if ped != 171: # TEMP HACK - let's pretend this guy never existed.
+		if ped not in ignored_peds: # TEMP HACK - can cause empty timesteps
 			timesteps[time].append(ped)
 		loc = np.array([row[2], row[4], 1])
 		loc = util.to_image_frame(Hinv, loc)
