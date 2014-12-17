@@ -1,0 +1,88 @@
+'''
+Created on Dec 10, 2014
+
+@author: ntraft
+'''
+from __future__ import division
+import sys
+import os
+import argparse
+import numpy as np
+
+import com.ntraft.ewap as ewap
+import com.ntraft.models as models
+import com.ntraft.util as util
+
+def main():
+	# Parse command-line arguments.
+	args = parse_args()
+	
+	Hfile = os.path.join(args.datadir, "H.txt")
+	obsfile = os.path.join(args.datadir, "obsmat.txt")
+
+	# Parse homography matrix.
+	H = np.loadtxt(Hfile)
+	Hinv = np.linalg.inv(H)
+	# Parse pedestrian annotations.
+	frames, timeframes, timesteps, agents = ewap.parse_annotations(Hinv, obsfile)
+	
+	test_sequences = np.array([
+		range(2112, 2395),
+		range(3648, 3769),
+		range(4163, 4374),
+		range(6797, 7164),
+		range(7301, 7608),
+		range(8373, 8620),
+		range(8859, 9544),
+		range(9603, 10096),
+		range(10101, 10528),
+		range(11205, 11500),
+		range(11835, 12172),
+		range(12201, 12382),
+	])
+	total_t = 0
+	for s in test_sequences: total_t += len(s)
+	model = models.model1
+	
+	print 'Running experiment...'
+	util.reset_timer()
+	
+	num_samples = 10
+	iters = 0
+	total_samples = 0
+	entropies = np.zeros(test_sequences.shape[0])
+	for i,timeline in enumerate(test_sequences):
+		M = np.zeros((2,2))
+		for frame in timeline:
+			t = frames[frame]
+			if t == -1: continue
+			
+			for _ in range(num_samples):
+				predictions = util.make_predictions(t, timesteps, agents, model)
+				for a,plan in enumerate(predictions.plan):
+					if plan.shape[0] > 1:
+						error = predictions.true_paths[a][1,0:2] - plan[1,0:2]
+						M += np.outer(error, error)
+						total_samples += 1
+			
+			iters += 1
+			print '{:.1%} complete'.format(iters/total_t)
+		
+		M /= total_samples
+		entropies[i] = 0.5*np.log((2*np.pi*np.e)**2 * np.linalg.det(M))
+# 		print 'entropy is', entropy
+# 		print 'variance:'
+# 		print M
+	
+	print 'EXPERIMENT COMPLETE.'
+	util.report_time()
+	np.savetxt('experiments/hyperparam_test.txt', entropies)
+
+def parse_args():
+	parser = argparse.ArgumentParser()
+	parser.add_argument("datadir", help="The parent directory for the dataset to be used.")
+	args = parser.parse_args()
+	return args
+
+if __name__ == "__main__":
+	sys.exit(main())
