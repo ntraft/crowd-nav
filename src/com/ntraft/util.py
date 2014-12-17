@@ -10,172 +10,12 @@ import numpy as np
 from numpy.core.numeric import inf
 import time
 
-from com.ntraft.gp import ParametricGaussianProcess
-import com.ntraft.covariance as cov
+from com.ntraft.gp import ParametricGPModel
 from collections import namedtuple
 
 NUM_SAMPLES = 100	# number of particles
 ALPHA = 1.0			# repelling force
 H = 11				# safety distance
-
-# The all-important kernels and their hyperparameters.
-
-# Hyperparameters from seq_eth #175
-# xkernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(3.5128), np.exp(2*5.3844)),
-# 	cov.linear_kernel(np.exp(-2*-2.8770)),
-# 	cov.noise_kernel(np.exp(2*-0.3170))
-# )
-# ykernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(2.2839), np.exp(2*2.5229)),
-# 	cov.linear_kernel(np.exp(-2*-4.8792)),
-# 	cov.noise_kernel(np.exp(2*-0.2407))
-# )
-
-# Hyperparameters from seq_eth #48 - HUGE variance and smooth
-xkernel = cov.summed_kernel(
-	cov.matern_kernel(np.exp(2.0194), np.exp(2*2.7259)),
-	cov.linear_kernel(np.exp(-2*-3.2502)),
-	cov.noise_kernel(np.exp(2*-1.1128))
-)
-ykernel = cov.summed_kernel(
-	cov.matern_kernel(np.exp(3.5181), np.exp(2*5.4197)),
-	cov.linear_kernel(np.exp(-2*-0.8087)),
-	cov.noise_kernel(np.exp(2*-0.5089))
-)
-
-# Hyperparameters from seq_eth #201 - pretty squirrely
-# xkernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(3.8777), np.exp(2*6.2545)),
-# 	cov.linear_kernel(np.exp(-2*-1.6083)),
-# 	cov.noise_kernel(np.exp(2*0.1863))
-# )
-# ykernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(2.0143), np.exp(2*3.4259)),
-# 	cov.linear_kernel(np.exp(-2*-5.5210)),
-# 	cov.noise_kernel(np.exp(2*-0.2941))
-# )
-
-# Hyperparameters from seq_eth #194 - BAD
-# xkernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(1.1525), np.exp(2*1.8115)),
-# 	cov.linear_kernel(np.exp(-2*-4.5797)),
-# 	cov.noise_kernel(np.exp(2*-6.1552))
-# )
-# ykernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(1.1738), np.exp(2*1.7332)),
-# 	cov.linear_kernel(np.exp(-2*-5.3511)),
-# 	cov.noise_kernel(np.exp(2*-6.2679))
-# )
-
-# Hyperparameters for seq_hotel.
-# xkernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(2.0257), np.exp(2*2.8614)),
-# 	cov.linear_kernel(np.exp(-2*-5.5200)),
-# 	cov.noise_kernel(np.exp(2*0.5135))
-# )
-# ykernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(2.0840), np.exp(2*2.3497)),
-# 	cov.linear_kernel(np.exp(-2*-6.1052)),
-# 	cov.noise_kernel(np.exp(2*-0.1758))
-# )
-
-# Trained from [48, 175].
-# xkernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(3.8541), np.exp(2*6.0068)),
-# 	cov.linear_kernel(np.exp(-2*-1.5976)),
-# 	cov.noise_kernel(np.exp(2*-0.3789))
-# )
-# ykernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(3.4963), np.exp(2*5.1759)),
-# 	cov.linear_kernel(np.exp(-2*-0.6863)),
-# 	cov.noise_kernel(np.exp(2*-0.3095))
-# )
-
-# Trained from 319:331 jointly.
-# xkernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(3.8782), np.exp(2*5.8351)),
-# 	cov.linear_kernel(np.exp(-2*1.4428)),
-# 	cov.noise_kernel(np.exp(2*0.3991))
-# )
-# ykernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(2.7552), np.exp(2*4.0612)),
-# 	cov.linear_kernel(np.exp(-2*-7.0977)),
-# 	cov.noise_kernel(np.exp(2*0.1184))
-# )
-
-# Trained from 319:331 greedily.
-# xkernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(3.5479), np.exp(2*5.6035)),
-# 	cov.linear_kernel(np.exp(-2*4.8811)),
-# 	cov.noise_kernel(np.exp(2*0.2929))
-# )
-# ykernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(3.2256), np.exp(2*5.5083)),
-# 	cov.linear_kernel(np.exp(-2*4.3907)),
-# 	cov.noise_kernel(np.exp(2*0.0081))
-# )
-
-# Trained from 169:174 jointly.
-# xkernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(4.0182), np.exp(2*6.2240)),
-# 	cov.linear_kernel(np.exp(-2*0.0586)),
-# 	cov.noise_kernel(np.exp(2*-0.1050))
-# )
-# ykernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(3.4996), np.exp(2*5.1338)),
-# 	cov.linear_kernel(np.exp(-2*0.0710)),
-# 	cov.noise_kernel(np.exp(2*-0.1966))
-# )
-
-# Trained from [48:49, 169:170, 172:175, 319:331] jointly. - Good, perhaps a bit noisy.
-# xkernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(3.9542), np.exp(2*5.9956)),
-# 	cov.linear_kernel(np.exp(-2*1.8273)),
-# 	cov.noise_kernel(np.exp(2*0.2926))
-# )
-# ykernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(2.8671), np.exp(2*4.1996)),
-# 	cov.linear_kernel(np.exp(-2*-5.7726)),
-# 	cov.noise_kernel(np.exp(2*0.0360))
-# )
-
-# Trained from [48:49, 169:170, 172:175, 319:331] greedily. - BAD
-# Can be made s.p.d. with a large addition if you need to show a bad example.
-# xkernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(3.5479), np.exp(2*5.6035)),
-# 	cov.linear_kernel(np.exp(-2*5.3545)),
-# 	cov.noise_kernel(np.exp(2*0.2929))
-# )
-# ykernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(13.1823), np.exp(2*5.7036)),
-# 	cov.linear_kernel(np.exp(-2*-0.9699)),
-# 	cov.noise_kernel(np.exp(2*2.0438))
-# )
-
-# Trained from [48:49, 169:170, 172:175, 319:331], averaged. - Nice.
-# xkernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(3.4171), np.exp(2*4.7080)),
-# 	cov.linear_kernel(np.exp(-2*-2.7809)),
-# 	cov.noise_kernel(np.exp(2*0.0088))
-# )
-# ykernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(2.4912), np.exp(2*3.6663)),
-# 	cov.linear_kernel(np.exp(-2*-2.2506)),
-# 	cov.noise_kernel(np.exp(2*-0.4789))
-# )
-
-# Trained from [48:49, 169:170, 172:175, 319:331], average of absolute values.
-# xkernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(3.4171), np.exp(2*4.7080)),
-# 	cov.linear_kernel(np.exp(-2*3.0120)),
-# 	cov.noise_kernel(np.exp(2*0.3684))
-# )
-# ykernel = cov.summed_kernel(
-# 	cov.matern_kernel(np.exp(2.6939), np.exp(2*3.6930)),
-# 	cov.linear_kernel(np.exp(-2*4.4675)),
-# 	cov.noise_kernel(np.exp(2*0.5707))
-# )
 
 total_time = 0
 total_runs = 0
@@ -217,7 +57,7 @@ Predictions = namedtuple('Predictions', ['past', 'true_paths', 'prior', 'posteri
 empty_predictions = Predictions([],[],[],[],[],[])
 
 @timeit
-def make_predictions(t, timesteps, agents, robot=-1, past_plan=None):
+def make_predictions(t, timesteps, agents, gp_model=ParametricGPModel(), robot=-1, past_plan=None):
 	peds = timesteps[t]
 	past_paths = []
 	true_paths = []
@@ -233,8 +73,8 @@ def make_predictions(t, timesteps, agents, robot=-1, past_plan=None):
 		
 		# Predict possible paths for the agent.
 		t_future = future[:,0]
-		gp = ParametricGaussianProcess(past_plus_dest, t_future, xkernel, ykernel)
-		samples = gp.sample(NUM_SAMPLES)
+		gp_model.recompute(past_plus_dest, t_future)
+		samples = gp_model.sample(NUM_SAMPLES)
 		prior.append(samples)
 	
 	# Perform importance sampling and get the maximum a-posteriori path.

@@ -8,6 +8,7 @@ from __future__ import division
 import cv2
 
 import com.ntraft.util as util
+import com.ntraft.models as models
 import matplotlib.pyplot as pl
 import numpy as np
 
@@ -45,6 +46,7 @@ class Display:
 		self.agents = agents
 		self.destinations = destinations
 		self.predictions = util.empty_predictions
+		self.model = models.model1
 		self.agent_num = 1
 		self.sample_num = 0
 		self.last_t = -1
@@ -138,10 +140,10 @@ class Display:
 					adex, displayed_agent = self.get_agent_index(agent)
 					agent_txt = 'Agent: {}'.format(displayed_agent)
 					if self.do_predictions:
-						self.predictions = util.make_predictions(t, self.timesteps, self.agents, agent, past_plan)
+						self.predictions = util.make_predictions(t, self.timesteps, self.agents, self.model, agent, past_plan)
 # 						self.predictions = util.fake_predictions(t, self.timesteps, self.agents, 10.0)
 						if multi_prediction and past_plan is not None:
-							predictions2 = util.make_predictions(t, self.timesteps, self.agents, agent, None)
+							predictions2 = util.make_predictions(t, self.timesteps, self.agents, self.model, agent, None)
 							if predictions2.plan[adex].shape[0] > 1:
 								t_plus_one2 = predictions2.plan[adex][1]
 						if self.predictions.plan[adex].shape[0] > 1:
