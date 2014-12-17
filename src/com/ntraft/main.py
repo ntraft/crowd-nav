@@ -17,6 +17,7 @@ import matplotlib.pyplot as pl
 
 import com.ntraft.ewap as ewap
 import com.ntraft.display as display
+import com.ntraft.models as models
 import com.ntraft.util as util
 
 POS_MSEC = cv2.cv.CV_CAP_PROP_POS_MSEC
@@ -50,6 +51,7 @@ def main():
 	seqname = os.path.basename(args.datadir)
 	cap = cv2.VideoCapture(os.path.join(args.datadir, seqname+".avi"))
 	disp = display.Display(cap, Hinv, obs_map, frames, timesteps, agents, destinations)
+	disp.model = models.model15
 	
 	# We can set the exact frame we want to look at:
 # 	disp.set_frame(780) # ETH sequence, beginning
@@ -66,7 +68,7 @@ def main():
 # 	cap.set(POS_MSEC, seekpos)
 
 	# Alternatively, we can search for a particular agent we're interested in:
-# 	agent_to_search = 342
+# 	agent_to_search = 194
 # 	ped_path = agents[agent_to_search]
 # 	frame_num = timeframes[int(ped_path[0,0])]
 # 	disp.set_frame(frame_num)

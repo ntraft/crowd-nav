@@ -181,3 +181,68 @@ cov.summed_kernel(
 	cov.linear_kernel(np.exp(-2*4.4675)),
 	cov.noise_kernel(np.exp(2*0.5707))
 ))
+
+# Trained from [194,197] jointly. Not enough. See y's linear param.
+model14 = ParametricGPModel(
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(3.3319), np.exp(2*5.8461)),
+	cov.linear_kernel(np.exp(-2*-0.4652)),
+	cov.noise_kernel(np.exp(2*0.1134))
+),
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(2.4688), np.exp(2*3.8112)),
+	cov.linear_kernel(np.exp(-2*-5.4513)),
+	cov.noise_kernel(np.exp(2*-0.2972))
+))
+
+# Trained from [194:197] jointly. Still not enough.
+model15 = ParametricGPModel(
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(3.4635), np.exp(2*5.7321)),
+	cov.linear_kernel(np.exp(-2*0.1474)),
+	cov.noise_kernel(np.exp(2*0.0922))
+),
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(2.8061), np.exp(2*4.1907)),
+	cov.linear_kernel(np.exp(-2*-5.3629)),
+	cov.noise_kernel(np.exp(2*-0.1183))
+))
+
+# Trained from [194:202] jointly.
+model16 = ParametricGPModel(
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(3.6491), np.exp(2*5.8470)),
+	cov.linear_kernel(np.exp(-2*0.9388)),
+	cov.noise_kernel(np.exp(2*0.1761))
+),
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(3.1300), np.exp(2*4.9362)),
+	cov.linear_kernel(np.exp(-2*0.9296)),
+	cov.noise_kernel(np.exp(2*-0.1385))
+))
+
+# Trained from [194:202], averaged.
+model17 = ParametricGPModel(
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(3.2257), np.exp(2*4.3906)),
+	cov.linear_kernel(np.exp(-2*-3.5695)),
+	cov.noise_kernel(np.exp(2*-0.9939))
+),
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(2.5265), np.exp(2*3.2624)),
+	cov.linear_kernel(np.exp(-2*-4.0408)),
+	cov.noise_kernel(np.exp(2*-0.9181))
+))
+
+# Trained from [194:224], averaged.
+model18 = ParametricGPModel(
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(3.3434), np.exp(2*4.5640)),
+	cov.linear_kernel(np.exp(-2*-2.9756)),
+	cov.noise_kernel(np.exp(2*-0.2781))
+),
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(2.4624), np.exp(2*3.1776)),
+	cov.linear_kernel(np.exp(-2*-3.4571)),
+	cov.noise_kernel(np.exp(2*-0.3478))
+))

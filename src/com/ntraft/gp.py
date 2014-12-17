@@ -34,6 +34,7 @@ class GaussianProcess:
 		self.prior_L = np.linalg.cholesky(self.Kss)
 		
 		self.Kss = self.kernel(testpoints, testpoints, 'train')
+# 		self.Kss += 1e-3*np.eye(self.Kss.shape[0])
 		self.L = np.linalg.cholesky(self.Kss - np.dot(v.T, v))
 	
 	def sample(self, n=1):
