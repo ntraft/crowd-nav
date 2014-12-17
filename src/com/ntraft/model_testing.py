@@ -42,7 +42,7 @@ def main():
 	])
 	total_t = 0
 	for s in test_sequences: total_t += len(s)
-	model = models.model1
+	model = models.model17
 	
 	print 'Running experiment...'
 	util.reset_timer()
@@ -54,6 +54,7 @@ def main():
 	for i,timeline in enumerate(test_sequences):
 		M = np.zeros((2,2))
 		for frame in timeline:
+			iters += 1
 			t = frames[frame]
 			if t == -1: continue
 			
@@ -65,8 +66,7 @@ def main():
 						M += np.outer(error, error)
 						total_samples += 1
 			
-			iters += 1
-			print '{:.1%} complete'.format(iters/total_t)
+			print 'frame {}: {:.1%} complete'.format(frame, iters/total_t)
 		
 		M /= total_samples
 		entropies[i] = 0.5*np.log((2*np.pi*np.e)**2 * np.linalg.det(M))
