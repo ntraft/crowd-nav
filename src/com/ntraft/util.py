@@ -17,25 +17,32 @@ NUM_SAMPLES = 100	# number of particles
 ALPHA = 1.0			# repelling force
 H = 11				# safety distance
 
-total_time = 0
+work_time = 0
+start_time = 0
 total_runs = 0
 def timeit(f):
 	def timed(*args, **kw):
-		global total_time, total_runs
+		global work_time, total_runs
 		ts = time.time()
 		result = f(*args, **kw)
 		te = time.time()
-		total_time += te-ts
+		work_time += te-ts
 		total_runs += 1
 		return result
 	return timed
 
 def reset_timer():
-	total_time = 0; total_runs = 0
+	global start_time
+	work_time = 0; total_runs = 0; start_time = time.time()
 
 def report_time():
-	time_taken = 0 if total_runs==0 else total_time/total_runs
+	time_taken = 0 if total_runs==0 else work_time/total_runs
+	total_time = time.time() - start_time
 	print('IGP on average took {:.2f} seconds with {} particles.'.format(time_taken, NUM_SAMPLES))
+	if total_time < 180:
+		print('(The whole thing took {:.2f} seconds.)'.format(total_time))
+	else:
+		print('(The whole thing took {:.1f} minutes.)'.format(total_time/60))
 
 def to_pixels(Hinv, loc):
 	"""
