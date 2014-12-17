@@ -234,8 +234,47 @@ cov.summed_kernel(
 	cov.noise_kernel(np.exp(2*-0.9181))
 ))
 
-# Trained from [194:224], averaged.
+# Trained from [194:202], in greedy cycles.
 model18 = ParametricGPModel(
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(4.4284), np.exp(2*6.5746)),
+	cov.linear_kernel(np.exp(-2*3.2876)),
+	cov.noise_kernel(np.exp(2*-0.5307))
+),
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(0.5139), np.exp(2*0.8271)),
+	cov.linear_kernel(np.exp(-2*-5.4365)),
+	cov.noise_kernel(np.exp(2*-6.2657))
+))
+
+# Trained from [194:202], in 250 rounds of early stopping (5) cycles.
+model19 = ParametricGPModel(
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(3.4168), np.exp(2*4.3343)),
+	cov.linear_kernel(np.exp(-2*-5.8574)),
+	cov.noise_kernel(np.exp(2*-0.5645))
+),
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(2.6582), np.exp(2*2.2945)),
+	cov.linear_kernel(np.exp(-2*-5.4133)),
+	cov.noise_kernel(np.exp(2*-0.3892))
+))
+
+# Trained from [194:202], in 250 rounds of early stopping (10) cycles.
+model20 = ParametricGPModel(
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(4.7982), np.exp(2*6.2814)),
+	cov.linear_kernel(np.exp(-2*-2.3599)),
+	cov.noise_kernel(np.exp(2*-0.2492))
+),
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(3.2023), np.exp(2*2.6502)),
+	cov.linear_kernel(np.exp(-2*-5.5290)),
+	cov.noise_kernel(np.exp(2*-0.2721))
+))
+
+# Trained from [194:224], averaged.
+model21 = ParametricGPModel(
 cov.summed_kernel(
 	cov.matern_kernel(np.exp(3.3434), np.exp(2*4.5640)),
 	cov.linear_kernel(np.exp(-2*-2.9756)),
@@ -245,4 +284,17 @@ cov.summed_kernel(
 	cov.matern_kernel(np.exp(2.4624), np.exp(2*3.1776)),
 	cov.linear_kernel(np.exp(-2*-3.4571)),
 	cov.noise_kernel(np.exp(2*-0.3478))
+))
+
+# Trained from [174:182, 184:191, 194:224], averaged.
+model22 = ParametricGPModel(
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(2.9880), np.exp(2*4.0357)),
+	cov.linear_kernel(np.exp(-2*-3.3105)),
+	cov.noise_kernel(np.exp(2*-0.3648))
+),
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(2.3049), np.exp(2*2.9303)),
+	cov.linear_kernel(np.exp(-2*-3.6089)),
+	cov.noise_kernel(np.exp(2*-0.3195))
 ))

@@ -42,12 +42,12 @@ def main():
 	])
 	total_t = 0
 	for s in test_sequences: total_t += len(s)
-	model = models.model17
+	model = models.model21
 	
 	print 'Running experiment...'
 	util.reset_timer()
 	
-	num_samples = 10
+	num_samples = 5
 	iters = 0
 	total_samples = 0
 	entropies = np.zeros(test_sequences.shape[0])
