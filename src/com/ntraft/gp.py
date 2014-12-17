@@ -92,3 +92,34 @@ class ParametricGaussianProcess:
 		x_post = self.xgp.sample_prior(n)
 		y_post = self.ygp.sample_prior(n)
 		return np.dstack((x_post, y_post))
+
+class ParametricGPModel:
+	'''
+	Models a parametric Gaussian process. The process retains its prior information as
+	given by its covariance functions, but the posterior can periodically be recomputed 
+	to incorporate new data.
+	'''
+
+	def __init__(self, xkernel=cov.sq_exp_kernel(), ykernel=cov.sq_exp_kernel()):
+		self.xkernel = xkernel
+		self.ykernel = ykernel
+	
+	def recompute(self, observations, timepoints):
+		'''
+		Recompute the posterior at the given evaluation points.
+		'''
+		self.gp = ParametricGaussianProcess(observations, timepoints, self.xkernel, self.ykernel)
+	
+	def sample(self, n=1):
+		'''
+		Draw n samples from the gaussian process posterior. See
+		ParametricGaussianProcess.sample for complete details.
+		'''
+		return self.gp.sample(n)
+	
+	def sample_prior(self, n=1):
+		'''
+		Draw n samples from the gaussian process prior. See
+		ParametricGaussianProcess.sample_prior for complete details.
+		'''
+		return self.gp.sample_prior(n)
