@@ -76,7 +76,7 @@ def main():
 	
 	print 'EXPERIMENT COMPLETE.'
 	util.report_time()
-	np.savetxt('experiments/hyperparam_test.txt', entropies)
+	np.savetxt('experiments/test-weighted-mean-h15.txt', entropies)
 
 def parse_args():
 	parser = argparse.ArgumentParser()
