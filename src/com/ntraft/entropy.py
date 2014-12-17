@@ -32,11 +32,11 @@ def main():
 	util.reset_timer()
 	
 	num_samples = 100
-	total_samples = 0
 	variances = np.array([0.1, 0.3, 1, 3, 10, 30, 100])
 	entropies = np.zeros_like(variances)
 	for i, sigma2 in enumerate(variances):
 		M = np.zeros((2,2))
+		total_samples = 0
 		for frame in timeline:
 			t = frames[frame]
 			if t == -1: continue
