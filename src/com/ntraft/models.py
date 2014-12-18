@@ -273,7 +273,7 @@ cov.summed_kernel(
 	cov.noise_kernel(np.exp(2*-0.2721))
 ))
 
-# Trained from [194:224], averaged.
+# Trained from [194:224], averaged. - BEST
 model21 = ParametricGPModel(
 cov.summed_kernel(
 	cov.matern_kernel(np.exp(3.3434), np.exp(2*4.5640)),
@@ -286,7 +286,7 @@ cov.summed_kernel(
 	cov.noise_kernel(np.exp(2*-0.3478))
 ))
 
-# Trained from [174:182, 184:191, 194:224], averaged.
+# Trained from [174:182, 184:191, 194:224], averaged. - bad, I think
 model22 = ParametricGPModel(
 cov.summed_kernel(
 	cov.matern_kernel(np.exp(2.9880), np.exp(2*4.0357)),
@@ -298,3 +298,43 @@ cov.summed_kernel(
 	cov.linear_kernel(np.exp(-2*-3.6089)),
 	cov.noise_kernel(np.exp(2*-0.3195))
 ))
+
+# Hyperparameters from seq_eth #195
+model23 = ParametricGPModel(
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(5.2662), np.exp(2*7.2229)),
+	cov.linear_kernel(np.exp(-2*-2.4491)),
+	cov.noise_kernel(np.exp(2*0.2786))
+),
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(2.2134), np.exp(2*2.9315)),
+	cov.linear_kernel(np.exp(-2*-5.4611)),
+	cov.noise_kernel(np.exp(2*-0.3647))
+))
+
+# Hyperparameters from seq_eth #198
+model24 = ParametricGPModel(
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(2.3244), np.exp(2*2.8775)),
+	cov.linear_kernel(np.exp(-2*-5.7386)),
+	cov.noise_kernel(np.exp(2*-2.2338))
+),
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(3.6438), np.exp(2*5.8213)),
+	cov.linear_kernel(np.exp(-2*1.2371)),
+	cov.noise_kernel(np.exp(2*-0.3983))
+))
+
+# Hyperparameters from seq_eth #199
+model25 = ParametricGPModel(
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(4.2322), np.exp(2*5.6138)),
+	cov.linear_kernel(np.exp(-2*-2.8974)),
+	cov.noise_kernel(np.exp(2*-0.6104))
+),
+cov.summed_kernel(
+	cov.matern_kernel(np.exp(2.1396), np.exp(2*1.9783)),
+	cov.linear_kernel(np.exp(-2*-5.3199)),
+	cov.noise_kernel(np.exp(2*-0.5393))
+))
+
