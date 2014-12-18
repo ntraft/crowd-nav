@@ -15,7 +15,7 @@ from collections import namedtuple
 
 NUM_SAMPLES = 100	# number of particles
 ALPHA = 1.0			# repelling force
-H = 15				# safety distance
+H = 11				# safety distance
 
 work_time = 0
 start_time = 0

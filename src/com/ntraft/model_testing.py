@@ -42,7 +42,7 @@ def main():
 	])
 	total_t = 0
 	for s in test_sequences: total_t += len(s)
-	model = models.model21
+	model = models.model16
 	
 	print 'Running experiment...'
 	util.reset_timer()
@@ -76,7 +76,7 @@ def main():
 	
 	print 'EXPERIMENT COMPLETE.'
 	util.report_time()
-	np.savetxt('experiments/test-weighted-mean-h15.txt', entropies)
+	np.savetxt('experiments/hyperparam-test-194-202-joint-2.txt', entropies)
 
 def parse_args():
 	parser = argparse.ArgumentParser()

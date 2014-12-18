@@ -68,12 +68,12 @@ def main():
 # 	cap.set(POS_MSEC, seekpos)
 
 	# Alternatively, we can search for a particular agent we're interested in:
-# 	agent_to_search = 184
-# 	ped_path = agents[agent_to_search]
-# 	frame_num = timeframes[int(ped_path[0,0])]
-# 	disp.set_frame(frame_num)
-# 	disp.agent_num = agent_to_search
-# 	disp.do_predictions = False
+	agent_to_search = 194
+	ped_path = agents[agent_to_search]
+	frame_num = timeframes[int(ped_path[0,0])]
+	disp.set_frame(frame_num)
+	disp.agent_num = agent_to_search
+	disp.do_predictions = False
 	
 	pl.ion()
 	display.plot_prediction_metrics([], [], [])
